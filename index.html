@@ -51,7 +51,7 @@ nav button:focus-visible,button:focus-visible,input:focus-visible,select:focus-v
 .bar select,.bar input[type=number]{font:13px var(--f-data);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 6px}
 .bar input[type=number]{width:64px}
 .val{font-family:var(--f-data);color:var(--ink);min-width:3ch}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:7px;overflow:hidden}
 .seg button{font:500 13px var(--f-body);background:none;border:0;padding:5px 11px;color:var(--muted);cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--ink)}
 .tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
@@ -135,9 +135,9 @@ tbody tr:hover{background:var(--bg)}
 </section>
 
 <section id="tab-news" hidden>
-  <p class="intro">Știri live de pe Yahoo Finance despre <b>schimbări de CEO</b> și <b>concedieri</b> (ultimele 60 de zile), filtrate automat. Cele mai noi sunt primele.</p>
+  <p class="intro">Toate știrile importante din piață, live de pe Yahoo Finance (ultimele 14 zile): <b>economie</b> (Fed, dobânzi, inflație, tarife), <b>rezultate financiare</b>, <b>fuziuni și achiziții</b>, <b>schimbări de CEO</b>, <b>concedieri</b> și știri generale de piață. Cele mai noi sunt primele.</p>
   <div class="bar">
-    <div class="seg" id="news-kind"><button aria-pressed="true" data-v="all">Toate</button><button aria-pressed="false" data-v="ceo">Schimbare CEO</button><button aria-pressed="false" data-v="lay">Concedieri</button></div>
+    <div class="seg" id="news-kind"><button aria-pressed="true" data-v="all">Toate</button><button aria-pressed="false" data-v="macro">Economie</button><button aria-pressed="false" data-v="earn">Rezultate</button><button aria-pressed="false" data-v="ma">Fuziuni</button><button aria-pressed="false" data-v="ceo">Schimbare CEO</button><button aria-pressed="false" data-v="lay">Concedieri</button><button aria-pressed="false" data-v="mkt">Piață</button></div>
   </div>
   <div class="news" id="news-list"></div>
 </section>
@@ -157,7 +157,7 @@ tbody tr:hover{background:var(--bg)}
   <p class="legend">Criterii: <b>S</b> sector (energie, alimentație, tehnologie, sănătate) · <b>C</b> capitalizare large/mega · <b>P</b> P/E în interval · <b>D</b> cash ÷ datorii (cât cash are față de toate datoriile; 1,5 = are cu 50% mai mult cash decât datorii) · <b>I</b> pe bursă înainte de 2005 · <b>T</b> trend ascendent (prețul crește față de acum 1 an <i>și</i> față de acum 5 ani). Galben = ratează un singur criteriu.</p>
 </section>
 
-<p class="foot">Date live de pe Yahoo Finance: prețurile se reîmprospătează automat la fiecare minut, cash/datorii și istoricul la câteva ore, știrile la 30 de minute. Companiile europene apar prin acțiunile lor listate în SUA (ADR), în dolari. Nu e sfat de investiții: e un instrument de filtrare, verifică întotdeauna înainte să cumperi.</p>
+<p class="foot">Date live de pe Yahoo Finance: prețurile se reîmprospătează automat la fiecare minut, cash/datorii și istoricul la câteva ore, știrile la 15 minute. Companiile europene apar prin acțiunile lor listate în SUA (ADR), în dolari. Nu e sfat de investiții: e un instrument de filtrare, verifică întotdeauna înainte să cumperi.</p>
 </div>
 
 <script>
@@ -304,13 +304,13 @@ seg('#pe-kind',v=>{peS.k=v;renderPE()});
 
 /* TAB 3 — News (live) */
 let NEWS=[],newsK="all";
-const KIND={ceo:["Schimbare CEO","mid"],lay:["Concedieri","no"]};
+const KIND={ceo:["Schimbare CEO","mid"],lay:["Concedieri","no"],ma:["Fuziuni",""],earn:["Rezultate","ok"],macro:["Economie",""],mkt:["Piață",""]};
 const MON=["ian","feb","mar","apr","mai","iun","iul","aug","sep","oct","nov","dec"];
 const fmtT=ms=>{const d=new Date(ms);return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}<br>${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
 const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const NAME=Object.fromEntries(META.map(m=>[SYM(m[0]),m[1]]));
 function renderNews(){const list=NEWS.filter(n=>newsK==="all"||n.kind===newsK);
-  $('#news-list').innerHTML=list.length?list.map(n=>`<article class="item"><div class="d">${fmtT(n.time)}<br><span class="pill ${KIND[n.kind][1]}">${KIND[n.kind][0]}</span></div><div><h3>${esc(n.title)}</h3>${n.tickers.length?`<p>${n.tickers.map(t=>`<a class="tk" href="${yahoo(t)}" target="_blank" rel="noopener">${t}</a> ${esc(NAME[t]||'')}`).join(' · ')}</p>`:''}<a class="src" href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.publisher||'Sursa')} ↗</a></div></article>`).join(''):`<p class="intro">${NEWS_LOADED?'Nicio știre de acest tip în ultimele 60 de zile.':'Se încarcă știrile…'}</p>`;}
+  $('#news-list').innerHTML=list.length?list.map(n=>`<article class="item"><div class="d">${fmtT(n.time)}<br><span class="pill ${KIND[n.kind][1]}">${KIND[n.kind][0]}</span></div><div><h3>${esc(n.title)}</h3>${n.tickers.length?`<p>${n.tickers.map(t=>`<a class="tk" href="${yahoo(t)}" target="_blank" rel="noopener">${t}</a> ${esc(NAME[t]||'')}`).join(' · ')}</p>`:''}<a class="src" href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.publisher||'Sursa')} ↗</a></div></article>`).join(''):`<p class="intro">${NEWS_LOADED?'Nicio știre de acest tip în ultimele 14 zile.':'Se încarcă știrile…'}</p>`;}
 let NEWS_LOADED=false;
 seg('#news-kind',v=>{newsK=v;renderNews()});
 
@@ -373,7 +373,7 @@ show(IDS.includes(start)?start:'top');
 renderAll();renderNews();
 loadQuotes();loadSlow();loadNews();
 setInterval(()=>{if(!document.hidden)loadQuotes()},60e3);
-setInterval(()=>{if(!document.hidden)loadNews()},30*60e3);
+setInterval(()=>{if(!document.hidden)loadNews()},15*60e3);
 setInterval(stamp,30e3);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastQ>60e3){loadQuotes();}});
 
