@@ -104,17 +104,26 @@ tbody tr:hover{background:var(--bg)}
 .foot{margin-top:28px;font-size:12px;color:var(--muted);max-width:90ch;border-top:1px solid var(--line);padding-top:12px}
 @media (max-width:560px){.item{grid-template-columns:1fr;gap:4px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.brand{background:none;border:0;padding:0;cursor:pointer;color:inherit;text-align:left}
+.brand:hover h1 span{text-decoration:underline}
+.star{background:none;border:0;cursor:pointer;font-size:18px;line-height:1;color:var(--muted);padding:2px 4px}
+.star.on{color:#E0A100}
+.morebtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:none;border:0;cursor:pointer;color:var(--accent);font:600 13px var(--f-body);padding:12px}
+.morebtn b{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--accent);font-size:17px;line-height:1}
+.morebtn:disabled{color:var(--muted);cursor:default}
+.morebtn:disabled b{border-color:var(--line)}
+td.morecell{padding:0}
+.home-grid{display:grid;gap:14px}
+.h2{font:700 20px var(--f-display);margin:6px 0 10px}
 </style>
 </head>
 <body>
-
-
 <div class="wrap">
 <header>
-  <div>
+  <button class="brand" id="brand" type="button" aria-label="Pagina principală">
     <h1>Radar <span>Bursă</span></h1>
     <div class="stamp" id="stamp">SUA + Europa · se încarcă datele live de pe Yahoo Finance…</div>
-  </div>
+  </button>
   <div class="search" id="search">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
     <input id="q" type="search" placeholder="Caută o companie (ex: Tesla, Nike, SAP)…" autocomplete="off" aria-label="Caută o companie">
@@ -123,15 +132,31 @@ tbody tr:hover{background:var(--bg)}
 </header>
 
 <nav role="tablist">
-  <button role="tab" data-tab="top" aria-selected="true">Top companii</button>
+  <button role="tab" data-tab="home" aria-selected="true">Acasă</button>
+  <button role="tab" data-tab="top" aria-selected="false">Top companii</button>
   <button role="tab" data-tab="pe" aria-selected="false">P/E ≈ 20</button>
   <button role="tab" data-tab="news" aria-selected="false">Știri majore</button>
   <button role="tab" data-tab="strat" aria-selected="false">Strategia mea</button>
   <button role="tab" data-tab="search" aria-selected="false">Căutare</button>
 </nav>
 
-<section id="tab-top">
-  <p class="intro">Cele mai mari companii din SUA și Europa, după <b>capitalizare</b> (valoarea totală a acțiunilor). Graficul mic arată prețul acțiunii în ultimii 10 ani.</p>
+<section id="tab-home">
+  <div class="home-grid">
+    <div>
+      <div class="h2">Favoritele mele</div>
+      <div class="summary" id="h-sum"></div>
+      <div class="tbl"><table id="t-home"></table></div>
+      <p class="legend">Apasă pe ☆ de lângă orice companie, din orice pagină, ca s-o adaugi aici. Favoritele sunt salvate pe dispozitivul ăsta.</p>
+    </div>
+    <div>
+      <div class="h2">Știri despre favoritele tale</div>
+      <div class="news" id="h-news"></div>
+    </div>
+  </div>
+</section>
+
+<section id="tab-top" hidden>
+  <p class="intro">Cele mai mari companii din SUA și Europa, după <b>capitalizare</b> (valoarea totală a acțiunilor). Graficul mic arată prețul acțiunii în ultimii 10 ani. Apasă <b>+</b> la final ca să vezi mai multe.</p>
   <div class="bar">
     <div class="seg" id="top-region"><button aria-pressed="true" data-v="all">Toate</button><button aria-pressed="false" data-v="US">SUA</button><button aria-pressed="false" data-v="EU">Europa</button></div>
     <label for="top-sector">Sector <select id="top-sector"></select></label>
@@ -140,18 +165,18 @@ tbody tr:hover{background:var(--bg)}
 </section>
 
 <section id="tab-pe" hidden>
-  <p class="intro"><b>P/E</b> = prețul acțiunii ÷ profitul pe acțiune. Un P/E de 20 înseamnă că plătești 20 $ pentru fiecare 1 $ de profit anual. Aici sunt companii mari și cunoscute cu P/E în jur de 20 (nici prea scumpe, nici „ieftine din motive proaste”).</p>
+  <p class="intro"><b>P/E</b> = prețul acțiunii ÷ profitul pe acțiune. Un P/E de 20 înseamnă că plătești 20 $ pentru fiecare 1 $ de profit anual. Aici sunt companii mari și cunoscute cu P/E în jur de 20.</p>
   <div class="bar">
     <label for="pe-c">Țintă P/E <input id="pe-c" type="range" min="10" max="35" step="1" value="20"><span class="val" id="pe-cv">20</span></label>
     <label for="pe-w">± toleranță <input id="pe-w" type="range" min="1" max="8" step="1" value="3"><span class="val" id="pe-wv">3</span></label>
     <div class="seg" id="pe-kind"><button aria-pressed="true" data-v="pe">P/E actual</button><button aria-pressed="false" data-v="fpe">P/E viitor</button></div>
   </div>
   <div class="tbl"><table id="t-pe"></table></div>
-  <p class="legend"><b>P/E actual</b> folosește profitul ultimelor 12 luni. <b>P/E viitor</b> folosește profitul estimat de analiști pentru următoarele 12 luni. Dacă P/E viitor e mult sub cel actual, analiștii se așteaptă ca profitul să crească.</p>
+  <p class="legend"><b>P/E actual</b> folosește profitul ultimelor 12 luni. <b>P/E viitor</b> folosește profitul estimat de analiști pentru următoarele 12 luni.</p>
 </section>
 
 <section id="tab-news" hidden>
-  <p class="intro">Toate știrile importante din piață, live de pe Yahoo Finance (ultimele 14 zile): <b>economie</b> (Fed, dobânzi, inflație, tarife), <b>rezultate financiare</b>, <b>fuziuni și achiziții</b>, <b>schimbări de CEO</b>, <b>concedieri</b> și știri generale de piață. Cele mai noi sunt primele.</p>
+  <p class="intro">Toate știrile importante din piață, live de pe Yahoo Finance (ultimele 14 zile): <b>economie</b>, <b>rezultate financiare</b>, <b>fuziuni și achiziții</b>, <b>schimbări de CEO</b>, <b>concedieri</b> și știri generale de piață.</p>
   <div class="bar">
     <div class="seg" id="news-kind"><button aria-pressed="true" data-v="all">Toate</button><button aria-pressed="false" data-v="macro">Economie</button><button aria-pressed="false" data-v="earn">Rezultate</button><button aria-pressed="false" data-v="ma">Fuziuni</button><button aria-pressed="false" data-v="ceo">Schimbare CEO</button><button aria-pressed="false" data-v="lay">Concedieri</button><button aria-pressed="false" data-v="mkt">Piață</button></div>
   </div>
@@ -159,18 +184,19 @@ tbody tr:hover{background:var(--bg)}
 </section>
 
 <section id="tab-strat" hidden>
-  <p class="intro">Strategia ta, aplicată pe ~70 de companii mari și cunoscute din SUA și Europa. O companie trece doar dacă bifează <b>toate</b> criteriile. Poți slăbi sau strânge fiecare criteriu din bara de mai jos.</p>
+  <p class="intro">Strategia ta, aplicată pe companii mari din SUA și Europa. O companie trece doar dacă bifează <b>toate</b> criteriile. Poți schimba pragurile din bara de mai jos. Apasă <b>+</b> la final ca să verifici mai multe companii.</p>
   <div class="bar">
     <label for="s-pemin">P/E de la <input id="s-pemin" type="number" value="20" step="1"></label>
     <label for="s-pemax">până la <input id="s-pemax" type="number" value="25" step="1"></label>
     <div class="seg" id="s-kind"><button aria-pressed="true" data-v="pe">P/E actual</button><button aria-pressed="false" data-v="fpe">P/E viitor</button></div>
     <label for="s-cash">Datorii ÷ cash ≤ <input id="s-cash" type="number" value="1.5" step="0.1" min="0"></label>
+    <label for="s-cd">Cash ÷ datorii &gt; <input id="s-cd" type="number" value="1" step="0.1" min="0"></label>
     <label for="s-cap">Capitalizare ≥ <input id="s-cap" type="number" value="10" step="5" min="0"> mld $</label>
   </div>
   <div class="summary" id="s-sum"></div>
   <div id="s-win" class="winners"></div>
   <div class="tbl"><table id="t-strat"></table></div>
-  <p class="legend">Criterii: <b>S</b> sector (energie, alimentație, tehnologie, sănătate) · <b>C</b> capitalizare large/mega · <b>P</b> P/E în interval · <b>D</b> datorii ÷ cash (de câte ori sunt datoriile mai mari decât banii cash; 1,5 = datoriile sunt cel mult 1,5 ori cât cash-ul, sub 1 = are mai mult cash decât datorii) · <b>I</b> pe bursă înainte de 2005 · <b>T</b> trend ascendent (prețul crește față de acum 1 an <i>și</i> față de acum 5 ani). Galben = ratează un singur criteriu.</p>
+  <p class="legend">Criterii: <b>S</b> sector (energie, alimentație, tehnologie, sănătate) · <b>C</b> capitalizare large/mega · <b>P</b> P/E în interval · <b>D</b> datorii ÷ cash (1,5 = datoriile sunt cel mult 1,5 ori cât cash-ul) · <b>E</b> cash ÷ datorii (peste 1 = are mai mulți bani cash decât datorii) · <b>I</b> pe bursă înainte de 2005 · <b>T</b> trend ascendent (prețul crește față de acum 1 an <i>și</i> față de acum 5 ani). Galben = ratează un singur criteriu.</p>
 </section>
 
 <section id="tab-search" hidden>
@@ -261,135 +287,168 @@ const META=[
 const SEC={tech:"Tehnologie",health:"Sănătate",energy:"Energie",food:"Alimentație",fin:"Financiar",other:"Altele"};
 const STRAT_SEC=new Set(["tech","health","energy","food"]);
 const BANKS=new Set(["JPM","HSBC"]);
-const SYM=t=>t==="BRK.B"?"BRK-B":t;
+const PAGE=25;
 let D=[],START_YEAR=new Date().getFullYear()-10;
 const $=s=>document.querySelector(s);
+const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const fmtCap=v=>v==null?"–":v>=1000?(v/1000).toFixed(2)+" T$":v.toFixed(v<100?1:0)+" mld $";
 const fmtPct=v=>v==null||isNaN(v)?"–":`<span class="${v>=0?'up':'down'}">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
 const fmtN=(v,d=1)=>v==null||isNaN(v)?"–":v.toFixed(d);
-const fmtRatio=r=>r==null?"n/a":r===Infinity?"fără cash":r===0?"fără datorii":r.toFixed(2)+"×";
+const fmtRatio=(r,inf,zero)=>r==null?"n/a":r===Infinity?inf:r===0?zero:r.toFixed(2)+"×";
+const fmtDC=c=>fmtRatio(c.ratio,"fără cash","fără datorii");
+const fmtCD=c=>fmtRatio(c.cd,"fără datorii","fără cash");
 const yahoo=t=>`https://finance.yahoo.com/quote/${encodeURIComponent(t)}/`;
-const coCell=c=>`<div class="co"><a href="${yahoo(c.t)}" target="_blank" rel="noopener">${c.n}</a><small><span class="tk">${c.t}</span> · ${c.secName||SEC[c.sec]}</small></div>`;
-const priceCell=c=>c.price==null?"–":`${c.price.toFixed(2)}<br><small>${fmtPct(c.dchg)}</small>`;
+const regLabel=r=>r==="US"?"SUA":r==="EU"?"Europa":"Internațional";
+const anLabel=s=>{if(!s)return"";const m=s.split(" - ");return m[1]||s};
+function ratios(c){c.ratio=c.cash==null||c.debt==null?null:(c.cash===0?(c.debt===0?0:Infinity):c.debt/c.cash);
+  c.cd=c.cash==null||c.debt==null?null:(c.debt===0?(c.cash===0?0:Infinity):c.cash/c.debt);return c;}
+
+/* Favorites */
+let FAV=LS.get('radar-fav',[]);
+const isFav=t=>FAV.includes(t);
+function toggleFav(t){FAV=isFav(t)?FAV.filter(x=>x!==t):[t,...FAV];LS.set('radar-fav',FAV);if(!byT(t))loadCompany(t);renderAll();}
+const starCell=c=>`<button class="star ${isFav(c.t)?'on':''}" data-fav="${esc(c.t)}" aria-label="${isFav(c.t)?'Scoate de la':'Adaugă la'} favorite">${isFav(c.t)?'★':'☆'}</button>`;
+const coCell=c=>`<div class="co"><a href="${yahoo(c.t)}" target="_blank" rel="noopener">${esc(c.n)}</a><small><span class="tk">${esc(c.t)}</span> · ${esc(c.secName||SEC[c.sec]||'')}</small></div>`;
+const priceCell=c=>c.price==null?"–":`${c.price.toFixed(2)}${c.cur&&c.cur!=="USD"?' '+esc(c.cur):''}<br><small>${fmtPct(c.dchg)}</small>`;
 function spark(ys){if(!ys)return"";const v=ys.map((x,i)=>[i,x]).filter(p=>p[1]!=null);if(v.length<2)return"";
   const w=96,h=28,mn=Math.min(...v.map(p=>p[1])),mx=Math.max(...v.map(p=>p[1]));const sx=i=>2+(i/10)*(w-6),sy=x=>h-3-((x-mn)/((mx-mn)||1))*(h-6);
   const d=v.map((p,k)=>(k?'L':'M')+sx(p[0]).toFixed(1)+','+sy(p[1]).toFixed(1)).join('');const last=v.at(-1),up=last[1]>=v[0][1];
   const col=up?'var(--up)':'var(--down)';
   return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-label="evoluție preț"><path d="${d}" fill="none" stroke="${col}" stroke-width="1.6"/><circle cx="${sx(last[0])}" cy="${sy(last[1])}" r="2.4" fill="${col}"/></svg>`;}
-const anLabel=s=>{if(!s)return"";const m=s.split(" - ");return m[1]||s};
-
-function sortable(tableEl,cols,rows,state,onSort){
-  const head='<thead><tr>'+cols.map((c,i)=>`<th class="${c.num?'num':''}" data-i="${i}" scope="col">${c.h}${state.i===i?(state.dir>0?' ▲':' ▼'):''}</th>`).join('')+'</tr></thead>';
-  const r=[...rows];const c=cols[state.i];if(c&&c.key)r.sort((a,b)=>{const x=c.key(a),y=c.key(b);if(x==null||Number.isNaN(x))return 1;if(y==null||Number.isNaN(y))return -1;return (x>y?1:x<y?-1:0)*state.dir});
-  tableEl.innerHTML=head+'<tbody>'+(r.length?r.map(x=>'<tr>'+cols.map(c=>`<td class="${c.num?'num':''}">${c.f(x)}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${cols.length}" style="color:var(--muted);padding:20px">${D.length?'Nicio companie nu se potrivește. Lărgește filtrele de mai sus.':'Se încarcă datele…'}</td></tr>`)+'</tbody>';
-  tableEl.querySelectorAll('th').forEach(th=>th.onclick=()=>{const i=+th.dataset.i;if(!cols[i].key)return;state.dir=state.i===i?-state.dir:-1;state.i=i;onSort();});
-}
-function seg(id,cb){const el=$(id);el.querySelectorAll('button').forEach(b=>b.onclick=()=>{el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));cb(b.dataset.v)});}
 const sparkH=()=>`${START_YEAR} → azi`;
 
-/* TAB 1 — Top */
+/* Generic sortable table with "+" (show more) footer */
+function sortable(tableEl,cols,rows,state,onSort,more){
+  const head='<thead><tr>'+cols.map((c,i)=>`<th class="${c.num?'num':''}" data-i="${i}" scope="col">${c.h}${state.i===i?(state.dir>0?' ▲':' ▼'):''}</th>`).join('')+'</tr></thead>';
+  const r=[...rows];const c=cols[state.i];if(c&&c.key)r.sort((a,b)=>{const x=c.key(a),y=c.key(b);if(x==null||Number.isNaN(x))return 1;if(y==null||Number.isNaN(y))return -1;return (x>y?1:x<y?-1:0)*state.dir});
+  const lim=more?state.lim||PAGE:Infinity;const shown=r.slice(0,lim);
+  let foot='';
+  if(more){const hidden=r.length-shown.length;const busy=EXTRA_BUSY;const end=EXTRA_END&&hidden<=0;
+    foot=`<tr><td class="morecell" colspan="${cols.length}"><button class="morebtn" data-more ${busy||end?'disabled':''}><b>${busy?'…':'+'}</b>${busy?'Se încarcă mai multe companii…':end?'Asta e tot':hidden>0?`Arată încă ${Math.min(PAGE,hidden)}`:'Încarcă mai multe companii'}</button></td></tr>`;}
+  tableEl.innerHTML=head+'<tbody>'+(shown.length?shown.map(x=>'<tr>'+cols.map(c=>`<td class="${c.num?'num':''}">${c.f(x)}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${cols.length}" style="color:var(--muted);padding:20px">${D.length?'Nicio companie nu se potrivește. Lărgește filtrele sau apasă + ca să încarci mai multe companii.':'Se încarcă datele…'}</td></tr>`)+foot+'</tbody>';
+  tableEl.querySelectorAll('th').forEach(th=>th.onclick=()=>{const i=+th.dataset.i;if(!cols[i].key)return;state.dir=state.i===i?-state.dir:-1;state.i=i;onSort();});
+  tableEl.querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));
+  const mb=tableEl.querySelector('[data-more]');if(mb)mb.onclick=()=>{if(r.length>lim){state.lim=lim+PAGE;onSort();}else{state.lim=lim+PAGE;loadMore();}};
+}
+function seg(id,cb){const el=$(id);el.querySelectorAll('button').forEach(b=>b.onclick=()=>{el.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));cb(b.dataset.v)});}
+const STAR={h:"",f:starCell};
+
+/* TAB — Top */
 const topS={reg:"all",sec:"all",sort:{i:3,dir:-1}};
 $('#top-sector').innerHTML='<option value="all">Toate</option>'+Object.entries(SEC).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
 $('#top-sector').onchange=e=>{topS.sec=e.target.value;renderTop()};
 seg('#top-region',v=>{topS.reg=v;renderTop()});
-const topCols=()=>[
- {h:"#",f:c=>`<span class="stamp">${c._rank}</span>`},
+const topCols=()=>[STAR,
  {h:"Companie",f:coCell,key:c=>c.n},
- {h:"Preț $",num:1,f:priceCell,key:c=>c.dchg},
+ {h:"Preț",num:1,f:priceCell,key:c=>c.dchg},
  {h:"Capitalizare",num:1,f:c=>fmtCap(c.cap),key:c=>c.cap},
  {h:"P/E",num:1,f:c=>fmtN(c.pe),key:c=>c.pe},
  {h:"1 an",num:1,f:c=>fmtPct(c.ch),key:c=>c.ch},
  {h:"5 ani",num:1,f:c=>fmtPct(c.g5),key:c=>c.g5},
  {h:sparkH(),f:c=>spark(c.ys)},
- {h:"Datorii ÷ cash",num:1,f:c=>fmtRatio(c.ratio),key:c=>c.ratio},
- {h:"Regiune",f:c=>`<span class="pill">${c.reg==="US"?"SUA":"Europa"}</span>`,key:c=>c.reg},
+ {h:"Datorii ÷ cash",num:1,f:fmtDC,key:c=>c.ratio},
+ {h:"Cash ÷ datorii",num:1,f:fmtCD,key:c=>c.cd},
+ {h:"Regiune",f:c=>`<span class="pill">${regLabel(c.reg)}</span>`,key:c=>c.reg},
  {h:"Analiști",f:c=>c.an?`<span class="pill">${anLabel(c.an)}</span>`:"–",key:c=>c.an}];
-function renderTop(){const rows=D.filter(c=>(topS.reg==="all"||c.reg===topS.reg)&&(topS.sec==="all"||c.sec===topS.sec)).sort((a,b)=>(b.cap||0)-(a.cap||0)).map((c,i)=>(c._rank=i+1,c));
-  sortable($('#t-top'),topCols(),rows,topS.sort,renderTop);}
+function renderTop(){const rows=ALL().filter(c=>(topS.reg==="all"||c.reg===topS.reg)&&(topS.sec==="all"||c.sec===topS.sec));
+  sortable($('#t-top'),topCols(),rows,topS.sort,renderTop,true);}
 
-/* TAB 2 — P/E ~20 */
-const peS={c:20,w:3,k:"pe",sort:{i:3,dir:-1}};
-const peCols=()=>[
+/* TAB — P/E */
+const peS={c:20,w:3,k:"pe",sort:{i:4,dir:-1}};
+const peCols=()=>[STAR,
  {h:"Companie",f:coCell,key:c=>c.n},
- {h:"Preț $",num:1,f:priceCell,key:c=>c.dchg},
+ {h:"Preț",num:1,f:priceCell,key:c=>c.dchg},
  {h:"P/E actual",num:1,f:c=>fmtN(c.pe),key:c=>c.pe},
  {h:"Capitalizare",num:1,f:c=>fmtCap(c.cap),key:c=>c.cap},
  {h:"P/E viitor",num:1,f:c=>fmtN(c.fpe),key:c=>c.fpe},
  {h:"1 an",num:1,f:c=>fmtPct(c.ch),key:c=>c.ch},
  {h:"Dividend",num:1,f:c=>c.div==null?"–":c.div.toFixed(2)+"%",key:c=>c.div},
- {h:"Datorii ÷ cash",num:1,f:c=>fmtRatio(c.ratio),key:c=>c.ratio},
+ {h:"Datorii ÷ cash",num:1,f:fmtDC,key:c=>c.ratio},
+ {h:"Cash ÷ datorii",num:1,f:fmtCD,key:c=>c.cd},
  {h:sparkH(),f:c=>spark(c.ys)}];
 function renderPE(){$('#pe-cv').textContent=peS.c;$('#pe-wv').textContent=peS.w;
-  const rows=D.filter(c=>{const v=c[peS.k];return v!=null&&v>=peS.c-peS.w&&v<=peS.c+peS.w&&(c.cap||0)>=10});
-  sortable($('#t-pe'),peCols(),rows,peS.sort,renderPE);}
+  const rows=ALL().filter(c=>{const v=c[peS.k];return v!=null&&v>=peS.c-peS.w&&v<=peS.c+peS.w&&(c.cap||0)>=10});
+  sortable($('#t-pe'),peCols(),rows,peS.sort,renderPE,true);}
 $('#pe-c').oninput=e=>{peS.c=+e.target.value;renderPE()};$('#pe-w').oninput=e=>{peS.w=+e.target.value;renderPE()};
 seg('#pe-kind',v=>{peS.k=v;renderPE()});
 
-/* TAB 3 — News (live) */
-let NEWS=[],newsK="all";
+/* TAB — News */
+let NEWS=[],newsK="all",NEWS_LOADED=false;
 const KIND={ceo:["Schimbare CEO","mid"],lay:["Concedieri","no"],ma:["Fuziuni",""],earn:["Rezultate","ok"],macro:["Economie",""],mkt:["Piață",""]};
 const MON=["ian","feb","mar","apr","mai","iun","iul","aug","sep","oct","nov","dec"];
 const fmtT=ms=>{const d=new Date(ms);return `${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}<br>${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
-const esc=s=>String(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const NAME=Object.fromEntries(META.map(m=>[SYM(m[0]),m[1]]));
+const NAME=Object.fromEntries(META.map(m=>[m[0],m[1]]));
+const newsHTML=n=>`<article class="item"><div class="d">${fmtT(n.time)}<br><span class="pill ${KIND[n.kind]?.[1]||''}">${KIND[n.kind]?.[0]||'Piață'}</span></div><div><h3>${esc(n.title)}</h3>${n.tickers?.length?`<p>${n.tickers.map(t=>`<a class="tk" href="${yahoo(t)}" target="_blank" rel="noopener">${esc(t)}</a> ${esc(NAME[t]||'')}`).join(' · ')}</p>`:''}<a class="src" href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.publisher||'Sursa')} ↗</a></div></article>`;
 function renderNews(){const list=NEWS.filter(n=>newsK==="all"||n.kind===newsK);
-  $('#news-list').innerHTML=list.length?list.map(n=>`<article class="item"><div class="d">${fmtT(n.time)}<br><span class="pill ${KIND[n.kind][1]}">${KIND[n.kind][0]}</span></div><div><h3>${esc(n.title)}</h3>${n.tickers.length?`<p>${n.tickers.map(t=>`<a class="tk" href="${yahoo(t)}" target="_blank" rel="noopener">${t}</a> ${esc(NAME[t]||'')}`).join(' · ')}</p>`:''}<a class="src" href="${esc(n.link)}" target="_blank" rel="noopener">${esc(n.publisher||'Sursa')} ↗</a></div></article>`).join(''):`<p class="intro">${NEWS_LOADED?'Nicio știre de acest tip în ultimele 14 zile.':'Se încarcă știrile…'}</p>`;}
-let NEWS_LOADED=false;
+  $('#news-list').innerHTML=list.length?list.map(newsHTML).join(''):`<p class="intro">${NEWS_LOADED?'Nicio știre de acest tip în ultimele 14 zile.':'Se încarcă știrile…'}</p>`;}
 seg('#news-kind',v=>{newsK=v;renderNews()});
 
-/* TAB 4 — Strategy */
-const sS={pemin:20,pemax:25,k:"pe",cash:1.5,cap:10,sort:{i:1,dir:-1}};
+/* TAB — Strategy */
+const sS={pemin:20,pemax:25,k:"pe",cash:1.5,cd:1,cap:10,sort:{i:2,dir:-1}};
+const NCRIT=7;
 function tests(c){const pe=c[sS.k];return {
   S:STRAT_SEC.has(c.sec), C:(c.cap||0)>=sS.cap, P:pe!=null&&pe>=sS.pemin&&pe<=sS.pemax,
-  D:c.ratio!=null&&c.ratio<=sS.cash, I:c.first!=null&&c.first<2005, T:c.ch!=null&&c.ch>0&&c.g5!=null&&c.g5>0};}
-const TIP={S:"Sector",C:"Capitalizare",P:"P/E",D:"Datorii ÷ cash",I:"Pe bursă înainte de 2005",T:"Trend ascendent"};
-const stratCols=()=>[
+  D:c.ratio!=null&&c.ratio<=sS.cash, E:c.cd!=null&&c.cd>sS.cd, I:c.first!=null&&c.first<2005, T:c.ch!=null&&c.ch>0&&c.g5!=null&&c.g5>0};}
+const TIP={S:"Sector",C:"Capitalizare",P:"P/E",D:"Datorii ÷ cash",E:"Cash ÷ datorii",I:"Pe bursă înainte de 2005",T:"Trend ascendent"};
+const score=c=>{c._t=tests(c);c._score=Object.values(c._t).filter(Boolean).length;return c};
+const stratCols=()=>[STAR,
  {h:"Companie",f:coCell,key:c=>c.n},
- {h:"Scor",num:1,f:c=>`<b>${c._score}</b>/6`,key:c=>c._score*1e5+(c.cap||0)},
+ {h:"Scor",num:1,f:c=>`<b>${c._score}</b>/${NCRIT}`,key:c=>c._score*1e5+(c.cap||0)},
  {h:"Criterii",f:c=>'<div class="checks">'+Object.entries(c._t).map(([k,v])=>`<span class="chk pill ${v?'ok':'no'}" title="${TIP[k]}: ${v?'da':'nu'}">${k}</span>`).join('')+'</div>'},
- {h:"Preț $",num:1,f:priceCell,key:c=>c.dchg},
+ {h:"Preț",num:1,f:priceCell,key:c=>c.dchg},
  {h:"Capitalizare",num:1,f:c=>fmtCap(c.cap),key:c=>c.cap},
  {h:"P/E",num:1,f:c=>fmtN(c.pe),key:c=>c.pe},
  {h:"P/E viitor",num:1,f:c=>fmtN(c.fpe),key:c=>c.fpe},
- {h:"Cash (mld $)",num:1,f:c=>fmtN(c.cash),key:c=>c.cash},
- {h:"Datorii (mld $)",num:1,f:c=>fmtN(c.debt),key:c=>c.debt},
- {h:"Datorii ÷ cash",num:1,f:c=>fmtRatio(c.ratio),key:c=>c.ratio},
+ {h:"Cash (mld)",num:1,f:c=>fmtN(c.cash),key:c=>c.cash},
+ {h:"Datorii (mld)",num:1,f:c=>fmtN(c.debt),key:c=>c.debt},
+ {h:"Datorii ÷ cash",num:1,f:fmtDC,key:c=>c.ratio},
+ {h:"Cash ÷ datorii",num:1,f:fmtCD,key:c=>c.cd},
  {h:"1 an",num:1,f:c=>fmtPct(c.ch),key:c=>c.ch},
  {h:"5 ani",num:1,f:c=>fmtPct(c.g5),key:c=>c.g5},
  {h:sparkH(),f:c=>spark(c.ys)}];
 function renderStrat(){
-  const rows=D.filter(c=>STRAT_SEC.has(c.sec)).map(c=>{c._t=tests(c);c._score=Object.values(c._t).filter(Boolean).length;return c});
-  const pass=rows.filter(c=>c._score===6),near=rows.filter(c=>c._score===5);
+  const rows=ALL().filter(c=>STRAT_SEC.has(c.sec)).map(score);
+  const pass=rows.filter(c=>c._score===NCRIT),near=rows.filter(c=>c._score===NCRIT-1);
   $('#s-sum').innerHTML=[["Companii analizate",rows.length],["Trec toate criteriile",pass.length],["Ratează un singur criteriu",near.length]].map(([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
-  $('#s-win').innerHTML=pass.map(c=>`<span class="winner">✓ ${c.n} (${c.t})</span>`).join('')+near.map(c=>{const miss=Object.entries(c._t).find(([,v])=>!v)[0];return `<span class="winner near">${c.n}: ratează ${TIP[miss]}</span>`}).join('');
-  sortable($('#t-strat'),stratCols(),rows,sS.sort,renderStrat);}
-const num=(id,key)=>{$(id).oninput=e=>{const v=parseFloat(e.target.value);if(!isNaN(v)){sS[key]=v;renderStrat()}}};
-num('#s-pemin','pemin');num('#s-pemax','pemax');num('#s-cash','cash');num('#s-cap','cap');
-seg('#s-kind',v=>{sS.k=v;renderStrat();renderSearch()});
-['#s-pemin','#s-pemax','#s-cash','#s-cap'].forEach(id=>$(id).addEventListener('input',()=>renderSearch()));
+  $('#s-win').innerHTML=pass.map(c=>`<span class="winner">✓ ${esc(c.n)} (${esc(c.t)})</span>`).join('')+near.map(c=>{const miss=Object.entries(c._t).find(([,v])=>!v)[0];return `<span class="winner near">${esc(c.n)}: ratează ${TIP[miss]}</span>`}).join('');
+  sortable($('#t-strat'),stratCols(),rows,sS.sort,renderStrat,true);}
+const num=(id,key)=>{$(id).oninput=e=>{const v=parseFloat(e.target.value);if(!isNaN(v)){sS[key]=v;renderStrat();renderSearch();renderHome()}}};
+num('#s-pemin','pemin');num('#s-pemax','pemax');num('#s-cash','cash');num('#s-cd','cd');num('#s-cap','cap');
+seg('#s-kind',v=>{sS.k=v;renderStrat();renderSearch();renderHome()});
 
-/* Search */
-const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-let SL=LS.get('radar-search',[]);            // list of symbols in Căutare tab
-let RECENT=LS.get('radar-recent',[]);        // recent picks [{s,n}]
-const SD={};                                  // symbol -> data
+/* Extra companies (loaded with "+", searched or favorited) */
+const SD={};let EXTRA=LS.get('radar-extra',[]),EXTRA_OFF=LS.get('radar-extra-off',0),EXTRA_BUSY=false,EXTRA_END=false;
+const byT=t=>D.find(c=>c.t===t)||SD[t];
+const ALL=()=>{const have=new Set(D.map(c=>c.t));return [...D,...EXTRA.filter(t=>!have.has(t)).map(t=>SD[t]).filter(c=>c&&c.price!=null)]};
+async function loadCompany(s){try{const c=await getJSON('/api/lookup?s='+encodeURIComponent(s));
+  c.reg=c.reg==="US"?"US":/\.(DE|PA|L|AS|SW|MC|MI|ST|CO|OL|BR|HE|IR|VI|LS)$/i.test(c.t)?"EU":c.reg;SD[s]=ratios(c);}
+  catch(e){SD[s]={t:s,n:s+' (nu am găsit date)',sec:'other',secName:'',ratio:null,cd:null};}}
+async function pmap(arr,n,fn){let i=0;await Promise.all(Array.from({length:n},async()=>{while(i<arr.length){await fn(arr[i++]);}}));}
+async function loadMore(){if(EXTRA_BUSY||EXTRA_END)return;EXTRA_BUSY=true;renderTables();
+  try{let added=0,tries=0;const have=new Set([...D.map(c=>c.t),...EXTRA]);
+    while(added<10&&tries<4){tries++;const j=await getJSON(`/api/more?offset=${EXTRA_OFF}&size=25`);EXTRA_OFF+=25;
+      const syms=(j.symbols||[]).filter(s=>!have.has(s));if(!(j.symbols||[]).length){EXTRA_END=true;break}
+      await pmap(syms,5,loadCompany);syms.forEach(s=>{have.add(s);if(SD[s]?.price!=null){EXTRA.push(s);added++}});}
+    LS.set('radar-extra',EXTRA);LS.set('radar-extra-off',EXTRA_OFF);
+  }catch(e){EXTRA_END=true}EXTRA_BUSY=false;renderTables();}
+
+/* TAB — Search */
+let SL=LS.get('radar-search',[]),RECENT=LS.get('radar-recent',[]);
 let TREND=null,suggItems=[],suggOn=-1,qTimer=null,qSeq=0;
 const sugg=$('#sugg'),qi=$('#q');
-const fmtPrice=c=>c.price==null?"–":`${c.price.toFixed(2)}${c.cur&&c.cur!=="USD"?' '+c.cur:''}<br><small>${fmtPct(c.dchg)}</small>`;
-const searchCols=()=>[...stratCols().map(c=>c.h==="Preț $"?{...c,h:"Preț",f:fmtPrice}:c),{h:"",f:c=>`<button class="rm" data-rm="${esc(c.t)}" aria-label="Scoate ${esc(c.n)}">✕</button>`}];
-const searchS={sort:{i:1,dir:-1}};
-function renderSearch(){const rows=SL.map(s=>SD[s]).filter(Boolean).map(c=>{c._t=tests(c);c._score=Object.values(c._t).filter(Boolean).length;return c});
-  const tb=$('#t-search');
+const searchS={sort:{i:2,dir:-1}};
+const searchCols=()=>[...stratCols(),{h:"",f:c=>`<button class="rm" data-rm="${esc(c.t)}" aria-label="Scoate">✕</button>`}];
+function renderSearch(){const tb=$('#t-search');
   if(!SL.length){tb.innerHTML='<tbody><tr><td style="color:var(--muted);padding:20px">Încă nu ai căutat nicio companie. Scrie un nume în bara de căutare de sus.</td></tr></tbody>';return}
+  const rows=SL.map(byT).filter(Boolean).map(score);
   sortable(tb,searchCols(),rows,searchS.sort,renderSearch);
-  const pending=SL.filter(s=>!SD[s]);if(pending.length)tb.querySelector('tbody').insertAdjacentHTML('beforeend',`<tr><td colspan="14" style="color:var(--muted)">Se încarcă: ${pending.map(esc).join(', ')}…</td></tr>`);
+  const pending=SL.filter(s=>!byT(s));if(pending.length)tb.querySelector('tbody').insertAdjacentHTML('beforeend',`<tr><td colspan="16" style="color:var(--muted)">Se încarcă: ${pending.map(esc).join(', ')}…</td></tr>`);
   tb.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{SL=SL.filter(x=>x!==b.dataset.rm);LS.set('radar-search',SL);renderSearch()});}
-async function loadCompany(s){try{const c=await getJSON('/api/lookup?s='+encodeURIComponent(s));
-  c.ratio=c.cash==null||c.debt==null?null:(c.cash===0?(c.debt===0?0:Infinity):c.debt/c.cash);SD[s]=c;}catch(e){SD[s]={t:s,n:s+' (nu am găsit date)',sec:'other',secName:'',ratio:null};}renderSearch();}
 function pick(it){qi.value='';hideSugg();qi.blur();
   RECENT=[{s:it.s,n:it.n},...RECENT.filter(r=>r.s!==it.s)].slice(0,6);LS.set('radar-recent',RECENT);
   if(!SL.includes(it.s)){SL=[it.s,...SL];LS.set('radar-search',SL);}
-  show('search');history.replaceState(null,'','#search');renderSearch();if(!SD[it.s])loadCompany(it.s);}
+  go('search');if(!byT(it.s))loadCompany(it.s).then(renderSearch);else renderSearch();}
 function drawSugg(groups){suggItems=[];suggOn=-1;let h='';
   for(const [title,items] of groups){if(!items.length)continue;h+=`<h4>${title}</h4>`;
     for(const it of items){const i=suggItems.push(it)-1;h+=`<button type="button" data-i="${i}"><span class="tk">${esc(it.s)}</span><span>${esc(it.n)}</span><small>${it.chg!=null?fmtPct(it.chg):esc(it.ex||'')}</small></button>`}}
@@ -403,7 +462,7 @@ async function showDefault(){drawSugg([["Căutări recente",RECENT],["Populare a
 qi.addEventListener('focus',()=>{if(!qi.value.trim())showDefault()});
 qi.addEventListener('blur',()=>setTimeout(hideSugg,150));
 qi.addEventListener('input',()=>{const v=qi.value.trim();clearTimeout(qTimer);if(!v){showDefault();return}
-  const local=META.filter(m=>m[0].toLowerCase().startsWith(v.toLowerCase())||m[1].toLowerCase().includes(v.toLowerCase())).slice(0,4).map(m=>({s:m[0],n:m[1],ex:'în radar'}));
+  const lv=v.toLowerCase();const local=META.filter(m=>m[0].toLowerCase().startsWith(lv)||m[1].toLowerCase().includes(lv)).slice(0,4).map(m=>({s:m[0],n:m[1],ex:'în radar'}));
   drawSugg([["Sugestii",local]]);
   qTimer=setTimeout(async()=>{const seq=++qSeq;try{const j=await getJSON('/api/lookup?q='+encodeURIComponent(v));if(seq!==qSeq)return;
     const seen=new Set(local.map(x=>x.s));drawSugg([["Sugestii",[...local,...(j.items||[]).filter(x=>!seen.has(x.s))].slice(0,8)]]);}catch(e){}},220);});
@@ -411,42 +470,55 @@ qi.addEventListener('keydown',e=>{const bs=[...sugg.querySelectorAll('button')];
   if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!bs.length)return;suggOn=(suggOn+(e.key==='ArrowDown'?1:-1)+bs.length)%bs.length;bs.forEach((b,i)=>b.classList.toggle('on',i===suggOn));}
   else if(e.key==='Enter'){e.preventDefault();const it=suggItems[suggOn>=0?suggOn:0];if(it)pick(it);else if(qi.value.trim())pick({s:qi.value.trim().toUpperCase(),n:qi.value.trim()});}
   else if(e.key==='Escape'){hideSugg();qi.blur();}});
-SL.forEach(loadCompany);
 
+/* TAB — Home (favorites) */
+const homeS={sort:{i:2,dir:-1}};
+function renderHome(){const tb=$('#t-home');const rows=FAV.map(byT).filter(Boolean).map(score);
+  const pass=rows.filter(c=>c._score===NCRIT).length;
+  $('#h-sum').innerHTML=FAV.length?[["Favorite",FAV.length],["Trec strategia ta",pass],["Pe plus azi",rows.filter(c=>(c.dchg||0)>0).length]].map(([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join(''):'';
+  if(!FAV.length){tb.innerHTML='<tbody><tr><td style="color:var(--muted);padding:20px">Nu ai încă favorite. Apasă ☆ lângă o companie din Top companii, P/E, Strategia mea sau Căutare.</td></tr></tbody>';}
+  else{sortable(tb,stratCols(),rows,homeS.sort,renderHome);
+    const pending=FAV.filter(s=>!byT(s));if(pending.length)tb.querySelector('tbody').insertAdjacentHTML('beforeend',`<tr><td colspan="15" style="color:var(--muted)">Se încarcă: ${pending.map(esc).join(', ')}…</td></tr>`);}
+  const fn=NEWS.filter(n=>n.tickers?.some(t=>FAV.includes(t))).slice(0,8);
+  $('#h-news').innerHTML=!FAV.length?'<p class="intro">Aici apar știrile despre companiile tale favorite.</p>':fn.length?fn.map(newsHTML).join(''):`<p class="intro">${NEWS_LOADED?'Nicio știre recentă despre favoritele tale.':'Se încarcă știrile…'}</p>`;}
 
 /* Data loading */
 let Q=null,S=null,lastQ=0;
 function merge(){
-  D=META.map(([t0,n,reg,sec])=>{const t=SYM(t0),a=Q?.data?.[t]||{},b=S?.data?.[t]||{};
+  D=META.map(([t,n,reg,sec])=>{const a=Q?.data?.[t]||{},b=S?.data?.[t]||{};
     const cash=BANKS.has(t)?null:b.cash??null,debt=BANKS.has(t)?null:b.debt??null;
     if(b.startYear)START_YEAR=b.startYear;
-    return {t,n,reg,sec,price:a.price??null,dchg:a.dchg??null,cap:a.cap??null,pe:a.pe??null,fpe:a.fpe??null,ch:a.ch??null,div:a.div??null,an:a.an||"",
-      first:b.first??a.first??null,cash,debt,ratio:cash==null||debt==null?null:(cash===0?(debt===0?0:Infinity):debt/cash),ys:b.ys||null,g5:b.g5??null};});
+    return ratios({t,n,reg,sec,price:a.price??null,dchg:a.dchg??null,cap:a.cap??null,pe:a.pe??null,fpe:a.fpe??null,ch:a.ch??null,div:a.div??null,an:a.an||"",
+      first:b.first??a.first??null,cash,debt,ys:b.ys||null,g5:b.g5??null});});
   renderAll();
 }
-function renderAll(){renderTop();renderPE();renderStrat();renderSearch();stamp();}
+function renderTables(){renderTop();renderPE();renderStrat();renderSearch();renderHome();}
+function renderAll(){renderTables();stamp();}
 function stamp(){const el=$('#stamp');if(!Q){el.textContent='SUA + Europa · se încarcă datele live de pe Yahoo Finance…';return}
   const mins=Math.round((Date.now()-lastQ)/60000);const d=new Date(Q.updated);
-  el.textContent=`SUA + Europa · live de pe Yahoo Finance · prețuri din ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`+(mins>=2?` (acum ${mins} min)`:'')+' · valori în USD';}
+  el.textContent=`SUA + Europa · live de pe Yahoo Finance · prețuri din ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`+(mins>=2?` (acum ${mins} min)`:'');}
 async function getJSON(u){const r=await fetch(u);if(!r.ok)throw new Error(r.status);return r.json();}
 async function loadQuotes(){try{Q=await getJSON('/api/quotes');lastQ=Date.now();merge();}catch(e){$('#stamp').textContent='Nu am putut încărca prețurile. Reîncerc automat…';}}
 async function loadSlow(){try{S=await getJSON('/api/slow');merge();}catch(e){}}
-async function loadNews(){try{const j=await getJSON('/api/news');NEWS=j.items||[];}catch(e){NEWS=[]}NEWS_LOADED=true;renderNews();}
+async function loadNews(){try{const j=await getJSON('/api/news');NEWS=j.items||[];}catch(e){NEWS=[]}NEWS_LOADED=true;renderNews();renderHome();}
+async function loadSaved(){const metaT=new Set(META.map(m=>m[0]));const need=[...new Set([...EXTRA,...SL,...FAV])].filter(t=>!metaT.has(t)&&!SD[t]);
+  await pmap(need,5,loadCompany);renderTables();}
 
 /* Tabs */
 const tabs=[...document.querySelectorAll('nav button')];
-const IDS=["top","pe","news","strat","search"];
+const IDS=["home","top","pe","news","strat","search"];
 function show(id){tabs.forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===id));IDS.forEach(t=>$('#tab-'+t).hidden=t!==id);try{localStorage.setItem('radar-tab',id)}catch(e){}}
-tabs.forEach(b=>b.onclick=()=>{show(b.dataset.tab);history.replaceState(null,'','#'+b.dataset.tab)});
-let start=(location.hash||'').slice(1);if(!IDS.includes(start)){try{start=localStorage.getItem('radar-tab')||'top'}catch(e){start='top'}}
-show(IDS.includes(start)?start:'top');
+function go(id){show(id);history.replaceState(null,'',id==='home'?location.pathname:'#'+id);window.scrollTo({top:0,behavior:'smooth'});}
+tabs.forEach(b=>b.onclick=()=>go(b.dataset.tab));
+$('#brand').onclick=()=>go('home');
+const start=(location.hash||'').slice(1);
+show(IDS.includes(start)?start:'home');
 renderAll();renderNews();
-loadQuotes();loadSlow();loadNews();
+loadQuotes();loadSlow();loadNews();loadSaved();
 setInterval(()=>{if(!document.hidden)loadQuotes()},60e3);
 setInterval(()=>{if(!document.hidden)loadNews()},15*60e3);
 setInterval(stamp,30e3);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&Date.now()-lastQ>60e3){loadQuotes();}});
-
 </script>
 </body>
 </html>
