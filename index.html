@@ -148,13 +148,13 @@ tbody tr:hover{background:var(--bg)}
     <label for="s-pemin">P/E de la <input id="s-pemin" type="number" value="20" step="1"></label>
     <label for="s-pemax">până la <input id="s-pemax" type="number" value="25" step="1"></label>
     <div class="seg" id="s-kind"><button aria-pressed="true" data-v="pe">P/E actual</button><button aria-pressed="false" data-v="fpe">P/E viitor</button></div>
-    <label for="s-cash">Cash ÷ datorii ≥ <input id="s-cash" type="number" value="1.5" step="0.1" min="0"></label>
+    <label for="s-cash">Datorii ÷ cash ≤ <input id="s-cash" type="number" value="1.5" step="0.1" min="0"></label>
     <label for="s-cap">Capitalizare ≥ <input id="s-cap" type="number" value="10" step="5" min="0"> mld $</label>
   </div>
   <div class="summary" id="s-sum"></div>
   <div id="s-win" class="winners"></div>
   <div class="tbl"><table id="t-strat"></table></div>
-  <p class="legend">Criterii: <b>S</b> sector (energie, alimentație, tehnologie, sănătate) · <b>C</b> capitalizare large/mega · <b>P</b> P/E în interval · <b>D</b> cash ÷ datorii (cât cash are față de toate datoriile; 1,5 = are cu 50% mai mult cash decât datorii) · <b>I</b> pe bursă înainte de 2005 · <b>T</b> trend ascendent (prețul crește față de acum 1 an <i>și</i> față de acum 5 ani). Galben = ratează un singur criteriu.</p>
+  <p class="legend">Criterii: <b>S</b> sector (energie, alimentație, tehnologie, sănătate) · <b>C</b> capitalizare large/mega · <b>P</b> P/E în interval · <b>D</b> datorii ÷ cash (de câte ori sunt datoriile mai mari decât banii cash; 1,5 = datoriile sunt cel mult 1,5 ori cât cash-ul, sub 1 = are mai mult cash decât datorii) · <b>I</b> pe bursă înainte de 2005 · <b>T</b> trend ascendent (prețul crește față de acum 1 an <i>și</i> față de acum 5 ani). Galben = ratează un singur criteriu.</p>
 </section>
 
 <p class="foot">Date live de pe Yahoo Finance: prețurile se reîmprospătează automat la fiecare minut, cash/datorii și istoricul la câteva ore, știrile la 15 minute. Companiile europene apar prin acțiunile lor listate în SUA (ADR), în dolari. Nu e sfat de investiții: e un instrument de filtrare, verifică întotdeauna înainte să cumperi.</p>
@@ -245,7 +245,7 @@ const $=s=>document.querySelector(s);
 const fmtCap=v=>v==null?"–":v>=1000?(v/1000).toFixed(2)+" T$":v.toFixed(v<100?1:0)+" mld $";
 const fmtPct=v=>v==null||isNaN(v)?"–":`<span class="${v>=0?'up':'down'}">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
 const fmtN=(v,d=1)=>v==null||isNaN(v)?"–":v.toFixed(d);
-const fmtRatio=r=>r==null?"n/a":r===Infinity?"fără datorii":r.toFixed(2)+"×";
+const fmtRatio=r=>r==null?"n/a":r===Infinity?"fără cash":r===0?"fără datorii":r.toFixed(2)+"×";
 const yahoo=t=>`https://finance.yahoo.com/quote/${encodeURIComponent(t)}/`;
 const coCell=c=>`<div class="co"><a href="${yahoo(c.t)}" target="_blank" rel="noopener">${c.n}</a><small><span class="tk">${c.t}</span> · ${SEC[c.sec]}</small></div>`;
 const priceCell=c=>c.price==null?"–":`${c.price.toFixed(2)}<br><small>${fmtPct(c.dchg)}</small>`;
@@ -294,7 +294,7 @@ const peCols=()=>[
  {h:"P/E viitor",num:1,f:c=>fmtN(c.fpe),key:c=>c.fpe},
  {h:"1 an",num:1,f:c=>fmtPct(c.ch),key:c=>c.ch},
  {h:"Dividend",num:1,f:c=>c.div==null?"–":c.div.toFixed(2)+"%",key:c=>c.div},
- {h:"Cash ÷ datorii",num:1,f:c=>fmtRatio(c.ratio),key:c=>c.ratio},
+ {h:"Datorii ÷ cash",num:1,f:c=>fmtRatio(c.ratio),key:c=>c.ratio},
  {h:sparkH(),f:c=>spark(c.ys)}];
 function renderPE(){$('#pe-cv').textContent=peS.c;$('#pe-wv').textContent=peS.w;
   const rows=D.filter(c=>{const v=c[peS.k];return v!=null&&v>=peS.c-peS.w&&v<=peS.c+peS.w&&(c.cap||0)>=10});
@@ -318,8 +318,8 @@ seg('#news-kind',v=>{newsK=v;renderNews()});
 const sS={pemin:20,pemax:25,k:"pe",cash:1.5,cap:10,sort:{i:1,dir:-1}};
 function tests(c){const pe=c[sS.k];return {
   S:STRAT_SEC.has(c.sec), C:(c.cap||0)>=sS.cap, P:pe!=null&&pe>=sS.pemin&&pe<=sS.pemax,
-  D:c.ratio!=null&&c.ratio>=sS.cash, I:c.first!=null&&c.first<2005, T:c.ch!=null&&c.ch>0&&c.g5!=null&&c.g5>0};}
-const TIP={S:"Sector",C:"Capitalizare",P:"P/E",D:"Cash ÷ datorii",I:"Pe bursă înainte de 2005",T:"Trend ascendent"};
+  D:c.ratio!=null&&c.ratio<=sS.cash, I:c.first!=null&&c.first<2005, T:c.ch!=null&&c.ch>0&&c.g5!=null&&c.g5>0};}
+const TIP={S:"Sector",C:"Capitalizare",P:"P/E",D:"Datorii ÷ cash",I:"Pe bursă înainte de 2005",T:"Trend ascendent"};
 const stratCols=()=>[
  {h:"Companie",f:coCell,key:c=>c.n},
  {h:"Scor",num:1,f:c=>`<b>${c._score}</b>/6`,key:c=>c._score*1e5+(c.cap||0)},
@@ -330,7 +330,7 @@ const stratCols=()=>[
  {h:"P/E viitor",num:1,f:c=>fmtN(c.fpe),key:c=>c.fpe},
  {h:"Cash (mld $)",num:1,f:c=>fmtN(c.cash),key:c=>c.cash},
  {h:"Datorii (mld $)",num:1,f:c=>fmtN(c.debt),key:c=>c.debt},
- {h:"Cash ÷ dat.",num:1,f:c=>fmtRatio(c.ratio),key:c=>c.ratio},
+ {h:"Datorii ÷ cash",num:1,f:c=>fmtRatio(c.ratio),key:c=>c.ratio},
  {h:"1 an",num:1,f:c=>fmtPct(c.ch),key:c=>c.ch},
  {h:"5 ani",num:1,f:c=>fmtPct(c.g5),key:c=>c.g5},
  {h:sparkH(),f:c=>spark(c.ys)}];
@@ -351,7 +351,7 @@ function merge(){
     const cash=BANKS.has(t)?null:b.cash??null,debt=BANKS.has(t)?null:b.debt??null;
     if(b.startYear)START_YEAR=b.startYear;
     return {t,n,reg,sec,price:a.price??null,dchg:a.dchg??null,cap:a.cap??null,pe:a.pe??null,fpe:a.fpe??null,ch:a.ch??null,div:a.div??null,an:a.an||"",
-      first:b.first??a.first??null,cash,debt,ratio:cash==null||debt==null?null:(debt===0?Infinity:cash/debt),ys:b.ys||null,g5:b.g5??null};});
+      first:b.first??a.first??null,cash,debt,ratio:cash==null||debt==null?null:(cash===0?(debt===0?0:Infinity):debt/cash),ys:b.ys||null,g5:b.g5??null};});
   renderAll();
 }
 function renderAll(){renderTop();renderPE();renderStrat();stamp();}
