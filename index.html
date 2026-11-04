@@ -90,6 +90,17 @@ tbody tr:hover{background:var(--bg)}
 .item a.src{font-size:12px;color:var(--accent)}
 .item>div{min-width:0}
 .legend{font-size:12px;color:var(--muted);margin-top:10px;max-width:90ch}
+.search{position:relative;flex:1 1 320px;max-width:460px;min-width:0}
+.search input{width:100%;font:15px var(--f-body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:10px 16px 10px 40px}
+.search input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.sugg{position:absolute;z-index:20;left:0;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:6px 0;max-height:60vh;overflow:auto}
+.sugg h4{margin:6px 14px 4px;font:600 11px var(--f-body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.sugg button{display:flex;width:100%;gap:10px;align-items:baseline;text-align:left;background:none;border:0;padding:8px 14px;font:14px var(--f-body);color:var(--ink);cursor:pointer}
+.sugg button:hover,.sugg button.on{background:var(--accent-soft)}
+.sugg .tk{min-width:64px}
+.sugg small{color:var(--muted);margin-left:auto;white-space:nowrap}
+.rm{background:none;border:1px solid var(--line);border-radius:6px;color:var(--muted);cursor:pointer;padding:2px 8px}
 .foot{margin-top:28px;font-size:12px;color:var(--muted);max-width:90ch;border-top:1px solid var(--line);padding-top:12px}
 @media (max-width:560px){.item{grid-template-columns:1fr;gap:4px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -104,7 +115,11 @@ tbody tr:hover{background:var(--bg)}
     <h1>Radar <span>Bursă</span></h1>
     <div class="stamp" id="stamp">SUA + Europa · se încarcă datele live de pe Yahoo Finance…</div>
   </div>
-  <div class="stamp">Click pe o companie → pagina ei pe Yahoo Finance</div>
+  <div class="search" id="search">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+    <input id="q" type="search" placeholder="Caută o companie (ex: Tesla, Nike, SAP)…" autocomplete="off" aria-label="Caută o companie">
+    <div class="sugg" id="sugg" hidden></div>
+  </div>
 </header>
 
 <nav role="tablist">
@@ -112,6 +127,7 @@ tbody tr:hover{background:var(--bg)}
   <button role="tab" data-tab="pe" aria-selected="false">P/E ≈ 20</button>
   <button role="tab" data-tab="news" aria-selected="false">Știri majore</button>
   <button role="tab" data-tab="strat" aria-selected="false">Strategia mea</button>
+  <button role="tab" data-tab="search" aria-selected="false">Căutare</button>
 </nav>
 
 <section id="tab-top">
@@ -155,6 +171,12 @@ tbody tr:hover{background:var(--bg)}
   <div id="s-win" class="winners"></div>
   <div class="tbl"><table id="t-strat"></table></div>
   <p class="legend">Criterii: <b>S</b> sector (energie, alimentație, tehnologie, sănătate) · <b>C</b> capitalizare large/mega · <b>P</b> P/E în interval · <b>D</b> datorii ÷ cash (de câte ori sunt datoriile mai mari decât banii cash; 1,5 = datoriile sunt cel mult 1,5 ori cât cash-ul, sub 1 = are mai mult cash decât datorii) · <b>I</b> pe bursă înainte de 2005 · <b>T</b> trend ascendent (prețul crește față de acum 1 an <i>și</i> față de acum 5 ani). Galben = ratează un singur criteriu.</p>
+</section>
+
+<section id="tab-search" hidden>
+  <p class="intro">Companiile pe care le-ai căutat, verificate cu <b>aceleași criterii ca la Strategia mea</b> (pragurile se iau din tab-ul Strategia mea). Caută orice companie listată, din orice țară, folosind bara de sus.</p>
+  <div class="tbl"><table id="t-search"></table></div>
+  <p class="legend">Pentru companiile care nu sunt pe bursa din SUA, prețul e în moneda locală, iar capitalizarea e convertită în dolari. Sectorul vine de la Yahoo: „Consumer Defensive” e tratat ca alimentație.</p>
 </section>
 
 <p class="foot">Date live de pe Yahoo Finance: prețurile se reîmprospătează automat la fiecare minut, cash/datorii și istoricul la câteva ore, știrile la 15 minute. Companiile europene apar prin acțiunile lor listate în SUA (ADR), în dolari. Nu e sfat de investiții: e un instrument de filtrare, verifică întotdeauna înainte să cumperi.</p>
@@ -247,7 +269,7 @@ const fmtPct=v=>v==null||isNaN(v)?"–":`<span class="${v>=0?'up':'down'}">${v>=
 const fmtN=(v,d=1)=>v==null||isNaN(v)?"–":v.toFixed(d);
 const fmtRatio=r=>r==null?"n/a":r===Infinity?"fără cash":r===0?"fără datorii":r.toFixed(2)+"×";
 const yahoo=t=>`https://finance.yahoo.com/quote/${encodeURIComponent(t)}/`;
-const coCell=c=>`<div class="co"><a href="${yahoo(c.t)}" target="_blank" rel="noopener">${c.n}</a><small><span class="tk">${c.t}</span> · ${SEC[c.sec]}</small></div>`;
+const coCell=c=>`<div class="co"><a href="${yahoo(c.t)}" target="_blank" rel="noopener">${c.n}</a><small><span class="tk">${c.t}</span> · ${c.secName||SEC[c.sec]}</small></div>`;
 const priceCell=c=>c.price==null?"–":`${c.price.toFixed(2)}<br><small>${fmtPct(c.dchg)}</small>`;
 function spark(ys){if(!ys)return"";const v=ys.map((x,i)=>[i,x]).filter(p=>p[1]!=null);if(v.length<2)return"";
   const w=96,h=28,mn=Math.min(...v.map(p=>p[1])),mx=Math.max(...v.map(p=>p[1]));const sx=i=>2+(i/10)*(w-6),sy=x=>h-3-((x-mn)/((mx-mn)||1))*(h-6);
@@ -279,6 +301,7 @@ const topCols=()=>[
  {h:"1 an",num:1,f:c=>fmtPct(c.ch),key:c=>c.ch},
  {h:"5 ani",num:1,f:c=>fmtPct(c.g5),key:c=>c.g5},
  {h:sparkH(),f:c=>spark(c.ys)},
+ {h:"Datorii ÷ cash",num:1,f:c=>fmtRatio(c.ratio),key:c=>c.ratio},
  {h:"Regiune",f:c=>`<span class="pill">${c.reg==="US"?"SUA":"Europa"}</span>`,key:c=>c.reg},
  {h:"Analiști",f:c=>c.an?`<span class="pill">${anLabel(c.an)}</span>`:"–",key:c=>c.an}];
 function renderTop(){const rows=D.filter(c=>(topS.reg==="all"||c.reg===topS.reg)&&(topS.sec==="all"||c.sec===topS.sec)).sort((a,b)=>(b.cap||0)-(a.cap||0)).map((c,i)=>(c._rank=i+1,c));
@@ -342,7 +365,54 @@ function renderStrat(){
   sortable($('#t-strat'),stratCols(),rows,sS.sort,renderStrat);}
 const num=(id,key)=>{$(id).oninput=e=>{const v=parseFloat(e.target.value);if(!isNaN(v)){sS[key]=v;renderStrat()}}};
 num('#s-pemin','pemin');num('#s-pemax','pemax');num('#s-cash','cash');num('#s-cap','cap');
-seg('#s-kind',v=>{sS.k=v;renderStrat()});
+seg('#s-kind',v=>{sS.k=v;renderStrat();renderSearch()});
+['#s-pemin','#s-pemax','#s-cash','#s-cap'].forEach(id=>$(id).addEventListener('input',()=>renderSearch()));
+
+/* Search */
+const LS={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let SL=LS.get('radar-search',[]);            // list of symbols in Căutare tab
+let RECENT=LS.get('radar-recent',[]);        // recent picks [{s,n}]
+const SD={};                                  // symbol -> data
+let TREND=null,suggItems=[],suggOn=-1,qTimer=null,qSeq=0;
+const sugg=$('#sugg'),qi=$('#q');
+const fmtPrice=c=>c.price==null?"–":`${c.price.toFixed(2)}${c.cur&&c.cur!=="USD"?' '+c.cur:''}<br><small>${fmtPct(c.dchg)}</small>`;
+const searchCols=()=>[...stratCols().map(c=>c.h==="Preț $"?{...c,h:"Preț",f:fmtPrice}:c),{h:"",f:c=>`<button class="rm" data-rm="${esc(c.t)}" aria-label="Scoate ${esc(c.n)}">✕</button>`}];
+const searchS={sort:{i:1,dir:-1}};
+function renderSearch(){const rows=SL.map(s=>SD[s]).filter(Boolean).map(c=>{c._t=tests(c);c._score=Object.values(c._t).filter(Boolean).length;return c});
+  const tb=$('#t-search');
+  if(!SL.length){tb.innerHTML='<tbody><tr><td style="color:var(--muted);padding:20px">Încă nu ai căutat nicio companie. Scrie un nume în bara de căutare de sus.</td></tr></tbody>';return}
+  sortable(tb,searchCols(),rows,searchS.sort,renderSearch);
+  const pending=SL.filter(s=>!SD[s]);if(pending.length)tb.querySelector('tbody').insertAdjacentHTML('beforeend',`<tr><td colspan="14" style="color:var(--muted)">Se încarcă: ${pending.map(esc).join(', ')}…</td></tr>`);
+  tb.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{SL=SL.filter(x=>x!==b.dataset.rm);LS.set('radar-search',SL);renderSearch()});}
+async function loadCompany(s){try{const c=await getJSON('/api/lookup?s='+encodeURIComponent(s));
+  c.ratio=c.cash==null||c.debt==null?null:(c.cash===0?(c.debt===0?0:Infinity):c.debt/c.cash);SD[s]=c;}catch(e){SD[s]={t:s,n:s+' (nu am găsit date)',sec:'other',secName:'',ratio:null};}renderSearch();}
+function pick(it){qi.value='';hideSugg();qi.blur();
+  RECENT=[{s:it.s,n:it.n},...RECENT.filter(r=>r.s!==it.s)].slice(0,6);LS.set('radar-recent',RECENT);
+  if(!SL.includes(it.s)){SL=[it.s,...SL];LS.set('radar-search',SL);}
+  show('search');history.replaceState(null,'','#search');renderSearch();if(!SD[it.s])loadCompany(it.s);}
+function drawSugg(groups){suggItems=[];suggOn=-1;let h='';
+  for(const [title,items] of groups){if(!items.length)continue;h+=`<h4>${title}</h4>`;
+    for(const it of items){const i=suggItems.push(it)-1;h+=`<button type="button" data-i="${i}"><span class="tk">${esc(it.s)}</span><span>${esc(it.n)}</span><small>${it.chg!=null?fmtPct(it.chg):esc(it.ex||'')}</small></button>`}}
+  sugg.innerHTML=h||'<h4>Niciun rezultat</h4>';sugg.hidden=false;
+  sugg.querySelectorAll('button').forEach(b=>b.onmousedown=e=>{e.preventDefault();pick(suggItems[+b.dataset.i])});}
+function hideSugg(){sugg.hidden=true;suggOn=-1}
+const POPULAR=[["NVDA","NVIDIA"],["AAPL","Apple"],["MSFT","Microsoft"],["TSLA","Tesla"],["AMZN","Amazon"],["ASML","ASML"]].map(([s,n])=>({s,n}));
+async function showDefault(){drawSugg([["Căutări recente",RECENT],["Populare acum",TREND||POPULAR]]);
+  if(!TREND){try{const j=await getJSON('/api/lookup?trending=1');TREND=j.items?.length?j.items:POPULAR;}catch(e){TREND=POPULAR}
+    if(!qi.value.trim()&&document.activeElement===qi)drawSugg([["Căutări recente",RECENT],["Populare acum",TREND]]);}}
+qi.addEventListener('focus',()=>{if(!qi.value.trim())showDefault()});
+qi.addEventListener('blur',()=>setTimeout(hideSugg,150));
+qi.addEventListener('input',()=>{const v=qi.value.trim();clearTimeout(qTimer);if(!v){showDefault();return}
+  const local=META.filter(m=>m[0].toLowerCase().startsWith(v.toLowerCase())||m[1].toLowerCase().includes(v.toLowerCase())).slice(0,4).map(m=>({s:m[0],n:m[1],ex:'în radar'}));
+  drawSugg([["Sugestii",local]]);
+  qTimer=setTimeout(async()=>{const seq=++qSeq;try{const j=await getJSON('/api/lookup?q='+encodeURIComponent(v));if(seq!==qSeq)return;
+    const seen=new Set(local.map(x=>x.s));drawSugg([["Sugestii",[...local,...(j.items||[]).filter(x=>!seen.has(x.s))].slice(0,8)]]);}catch(e){}},220);});
+qi.addEventListener('keydown',e=>{const bs=[...sugg.querySelectorAll('button')];
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();if(!bs.length)return;suggOn=(suggOn+(e.key==='ArrowDown'?1:-1)+bs.length)%bs.length;bs.forEach((b,i)=>b.classList.toggle('on',i===suggOn));}
+  else if(e.key==='Enter'){e.preventDefault();const it=suggItems[suggOn>=0?suggOn:0];if(it)pick(it);else if(qi.value.trim())pick({s:qi.value.trim().toUpperCase(),n:qi.value.trim()});}
+  else if(e.key==='Escape'){hideSugg();qi.blur();}});
+SL.forEach(loadCompany);
+
 
 /* Data loading */
 let Q=null,S=null,lastQ=0;
@@ -354,7 +424,7 @@ function merge(){
       first:b.first??a.first??null,cash,debt,ratio:cash==null||debt==null?null:(cash===0?(debt===0?0:Infinity):debt/cash),ys:b.ys||null,g5:b.g5??null};});
   renderAll();
 }
-function renderAll(){renderTop();renderPE();renderStrat();stamp();}
+function renderAll(){renderTop();renderPE();renderStrat();renderSearch();stamp();}
 function stamp(){const el=$('#stamp');if(!Q){el.textContent='SUA + Europa · se încarcă datele live de pe Yahoo Finance…';return}
   const mins=Math.round((Date.now()-lastQ)/60000);const d=new Date(Q.updated);
   el.textContent=`SUA + Europa · live de pe Yahoo Finance · prețuri din ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`+(mins>=2?` (acum ${mins} min)`:'')+' · valori în USD';}
@@ -365,7 +435,7 @@ async function loadNews(){try{const j=await getJSON('/api/news');NEWS=j.items||[
 
 /* Tabs */
 const tabs=[...document.querySelectorAll('nav button')];
-const IDS=["top","pe","news","strat"];
+const IDS=["top","pe","news","strat","search"];
 function show(id){tabs.forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===id));IDS.forEach(t=>$('#tab-'+t).hidden=t!==id);try{localStorage.setItem('radar-tab',id)}catch(e){}}
 tabs.forEach(b=>b.onclick=()=>{show(b.dataset.tab);history.replaceState(null,'','#'+b.dataset.tab)});
 let start=(location.hash||'').slice(1);if(!IDS.includes(start)){try{start=localStorage.getItem('radar-tab')||'top'}catch(e){start='top'}}
