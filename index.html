@@ -104,6 +104,31 @@ tbody tr:hover{background:var(--bg)}
 .foot{margin-top:28px;font-size:12px;color:var(--muted);max-width:90ch;border-top:1px solid var(--line);padding-top:12px}
 @media (max-width:560px){.item{grid-template-columns:1fr;gap:4px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.idx{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:14px}
+.idx a{display:block;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.idx a:hover{border-color:var(--accent)}
+.idx .k{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.idx .v{font:600 16px var(--f-data);font-variant-numeric:tabular-nums}
+.near{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+.near .h2{margin-top:0}
+.near ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px}
+.near li{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.near li .co{min-width:0;flex:1}
+.near .miss{font-size:12px;color:var(--warn)}
+.near .sc{font:700 15px var(--f-data);white-space:nowrap}
+.acct{display:flex;align-items:center;gap:8px}
+.btn{font:600 14px var(--f-body);border-radius:999px;padding:9px 16px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff;white-space:nowrap}
+.btn.ghost{background:none;color:var(--accent)}
+.who{font-size:12px;color:var(--muted);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:grid;place-items:center;padding:16px}
+.modal form{background:var(--surface);color:var(--ink);border-radius:14px;padding:22px;width:min(380px,100%);display:grid;gap:12px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.modal h3{font:700 20px var(--f-display);margin:0}
+.modal label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.modal input{font:15px var(--f-body);padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+.modal .row{display:flex;gap:8px;flex-wrap:wrap}
+.modal .msg{font-size:13px;min-height:1em}
+.modal .msg.err{color:var(--down)} .modal .msg.ok{color:var(--up)}
+.linkbtn{background:none;border:0;color:var(--accent);cursor:pointer;font:13px var(--f-body);padding:0;text-align:left}
 .brand{background:none;border:0;padding:0;cursor:pointer;color:inherit;text-align:left}
 .brand:hover h1 span{text-decoration:underline}
 .star{background:none;border:0;cursor:pointer;font-size:18px;line-height:1;color:var(--muted);padding:2px 4px}
@@ -126,10 +151,26 @@ td.morecell{padding:0}
   </button>
   <div class="search" id="search">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-    <input id="q" type="search" placeholder="Caută o companie (ex: Tesla, Nike, SAP)…" autocomplete="off" aria-label="Caută o companie">
+    <input id="q" type="search" placeholder="Caută o companie, ETF sau indice (ex: Nike, VOO, S&P 500)…" autocomplete="off" aria-label="Caută o companie">
     <div class="sugg" id="sugg" hidden></div>
   </div>
+  <div class="acct" id="acct" hidden>
+    <span class="who" id="who"></span>
+    <button class="btn" id="loginBtn" type="button">Intră în cont</button>
+  </div>
 </header>
+<div class="modal" id="modal" hidden>
+  <form id="authForm" novalidate>
+    <h3 id="authTitle">Intră în cont</h3>
+    <p class="legend" style="margin:0">Cu un cont, favoritele tale apar pe toate dispozitivele: telefon, tabletă, laptop.</p>
+    <label for="authEmail">Email<input id="authEmail" type="email" autocomplete="email" required></label>
+    <label for="authPass">Parolă<input id="authPass" type="password" autocomplete="current-password" minlength="6" required></label>
+    <div class="msg" id="authMsg"></div>
+    <div class="row"><button class="btn" id="authGo" type="submit">Intră</button><button class="btn ghost" id="authCancel" type="button">Renunță</button></div>
+    <button class="linkbtn" id="authSwitch" type="button">Nu ai cont? Creează unul</button>
+    <button class="linkbtn" id="authForgot" type="button">Am uitat parola</button>
+  </form>
+</div>
 
 <nav role="tablist">
   <button role="tab" data-tab="home" aria-selected="true">Acasă</button>
@@ -141,12 +182,18 @@ td.morecell{padding:0}
 </nav>
 
 <section id="tab-home">
+  <div class="idx" id="idx"></div>
+  <div class="near">
+    <div class="h2">Aproape bune de investit</div>
+    <ul id="near-list"></ul>
+    <p class="legend" style="margin-bottom:0">Companiile care ratează cel mai puțin din criteriile <b>Strategiei mele</b>. Apasă ➕ în Strategia mea ca să fie verificate mai multe companii.</p>
+  </div>
   <div class="home-grid">
     <div>
       <div class="h2">Favoritele mele</div>
       <div class="summary" id="h-sum"></div>
       <div class="tbl"><table id="t-home"></table></div>
-      <p class="legend">Apasă pe ☆ de lângă orice companie, din orice pagină, ca s-o adaugi aici. Favoritele sunt salvate pe dispozitivul ăsta.</p>
+      <p class="legend" id="favNote">Apasă pe ☆ de lângă orice companie, din orice pagină, ca s-o adaugi aici. Intră în cont ca să le vezi pe toate dispozitivele.</p>
     </div>
     <div>
       <div class="h2">Știri despre favoritele tale</div>
@@ -208,6 +255,7 @@ td.morecell{padding:0}
 <p class="foot">Date live de pe Yahoo Finance: prețurile se reîmprospătează automat la fiecare minut, cash/datorii și istoricul la câteva ore, știrile la 15 minute. Companiile europene apar prin acțiunile lor listate în SUA (ADR), în dolari. Nu e sfat de investiții: e un instrument de filtrare, verifică întotdeauna înainte să cumperi.</p>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const META=[
 ["AAPL","Apple","US","tech"],
@@ -307,7 +355,7 @@ function ratios(c){c.ratio=c.cash==null||c.debt==null?null:(c.cash===0?(c.debt==
 /* Favorites */
 let FAV=LS.get('radar-fav',[]);
 const isFav=t=>FAV.includes(t);
-function toggleFav(t){FAV=isFav(t)?FAV.filter(x=>x!==t):[t,...FAV];LS.set('radar-fav',FAV);if(!byT(t))loadCompany(t);renderAll();}
+function toggleFav(t){const on=!isFav(t);FAV=on?[t,...FAV]:FAV.filter(x=>x!==t);LS.set('radar-fav',FAV);cloudFav(t,on);if(!byT(t))loadCompany(t);renderAll();}
 const starCell=c=>`<button class="star ${isFav(c.t)?'on':''}" data-fav="${esc(c.t)}" aria-label="${isFav(c.t)?'Scoate de la':'Adaugă la'} favorite">${isFav(c.t)?'★':'☆'}</button>`;
 const coCell=c=>`<div class="co"><a href="${yahoo(c.t)}" target="_blank" rel="noopener">${esc(c.n)}</a><small><span class="tk">${esc(c.t)}</span> · ${esc(c.secName||SEC[c.sec]||'')}</small></div>`;
 const priceCell=c=>c.price==null?"–":`${c.price.toFixed(2)}${c.cur&&c.cur!=="USD"?' '+esc(c.cur):''}<br><small>${fmtPct(c.dchg)}</small>`;
@@ -413,9 +461,9 @@ function renderStrat(){
   $('#s-sum').innerHTML=[["Companii analizate",rows.length],["Trec toate criteriile",pass.length],["Ratează un singur criteriu",near.length]].map(([k,v])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
   $('#s-win').innerHTML=pass.map(c=>`<span class="winner">✓ ${esc(c.n)} (${esc(c.t)})</span>`).join('')+near.map(c=>{const miss=Object.entries(c._t).find(([,v])=>!v)[0];return `<span class="winner near">${esc(c.n)}: ratează ${TIP[miss]}</span>`}).join('');
   sortable($('#t-strat'),stratCols(),rows,sS.sort,renderStrat,true);}
-const num=(id,key)=>{$(id).oninput=e=>{const v=parseFloat(e.target.value);if(!isNaN(v)){sS[key]=v;renderStrat();renderSearch();renderHome()}}};
+const num=(id,key)=>{$(id).oninput=e=>{const v=parseFloat(e.target.value);if(!isNaN(v)){sS[key]=v;renderStrat();renderSearch();renderHome();renderNear()}}};
 num('#s-pemin','pemin');num('#s-pemax','pemax');num('#s-cash','cash');num('#s-cd','cd');num('#s-cap','cap');
-seg('#s-kind',v=>{sS.k=v;renderStrat();renderSearch();renderHome()});
+seg('#s-kind',v=>{sS.k=v;renderStrat();renderSearch();renderHome();renderNear()});
 
 /* Extra companies (loaded with "+", searched or favorited) */
 const SD={};let EXTRA=LS.get('radar-extra',[]),EXTRA_OFF=LS.get('radar-extra-off',0),EXTRA_BUSY=false,EXTRA_END=false;
@@ -451,7 +499,7 @@ function pick(it){qi.value='';hideSugg();qi.blur();
   go('search');if(!byT(it.s))loadCompany(it.s).then(renderSearch);else renderSearch();}
 function drawSugg(groups){suggItems=[];suggOn=-1;let h='';
   for(const [title,items] of groups){if(!items.length)continue;h+=`<h4>${title}</h4>`;
-    for(const it of items){const i=suggItems.push(it)-1;h+=`<button type="button" data-i="${i}"><span class="tk">${esc(it.s)}</span><span>${esc(it.n)}</span><small>${it.chg!=null?fmtPct(it.chg):esc(it.ex||'')}</small></button>`}}
+    for(const it of items){const i=suggItems.push(it)-1;h+=`<button type="button" data-i="${i}"><span class="tk">${esc(it.s)}</span><span>${esc(it.n)}</span><small>${it.chg!=null?fmtPct(it.chg):esc((it.type&&it.type!=='EQUITY'?(it.type==='INDEX'?'Indice · ':'ETF · '):'')+(it.ex||''))}</small></button>`}}
   sugg.innerHTML=h||'<h4>Niciun rezultat</h4>';sugg.hidden=false;
   sugg.querySelectorAll('button').forEach(b=>b.onmousedown=e=>{e.preventDefault();pick(suggItems[+b.dataset.i])});}
 function hideSugg(){sugg.hidden=true;suggOn=-1}
@@ -471,6 +519,14 @@ qi.addEventListener('keydown',e=>{const bs=[...sugg.querySelectorAll('button')];
   else if(e.key==='Enter'){e.preventDefault();const it=suggItems[suggOn>=0?suggOn:0];if(it)pick(it);else if(qi.value.trim())pick({s:qi.value.trim().toUpperCase(),n:qi.value.trim()});}
   else if(e.key==='Escape'){hideSugg();qi.blur();}});
 
+/* Home — index tiles and near-miss box */
+const IDX=[["^GSPC","S&P 500"],["^IXIC","Nasdaq"],["^DJI","Dow Jones"],["^STOXX50E","Euro Stoxx 50"],["^GDAXI","DAX"],["VOO","Vanguard S&P 500"],["VTI","Vanguard Total"],["QQQ","Invesco QQQ"]];
+function renderIdx(){$('#idx').innerHTML=IDX.map(([s,n])=>{const q=Q?.data?.[s]||{};return `<a href="${yahoo(s)}" target="_blank" rel="noopener"><div class="k">${esc(n)}</div><div class="v">${q.price!=null?q.price.toLocaleString('en-US',{maximumFractionDigits:2}):'–'}</div><div>${fmtPct(q.dchg)}</div></a>`}).join('');}
+function renderNear(){const rows=ALL().filter(c=>STRAT_SEC.has(c.sec)&&c.price!=null).map(score).filter(c=>c._score>=NCRIT-2&&c._score<NCRIT)
+    .sort((a,b)=>b._score-a._score||(b.cap||0)-(a.cap||0)).slice(0,6);
+  $('#near-list').innerHTML=rows.length?rows.map(c=>`<li>${starCell(c)}<div class="co"><a href="${yahoo(c.t)}" target="_blank" rel="noopener">${esc(c.n)}</a><small><span class="tk">${esc(c.t)}</span> · ${esc(c.secName||SEC[c.sec]||'')}</small><span class="miss">Ratează: ${Object.entries(c._t).filter(([,v])=>!v).map(([k])=>TIP[k]).join(', ')}</span></div><span class="sc">${c._score}/${NCRIT}</span></li>`).join(''):`<li style="color:var(--muted)">${D.length&&Q?'Nicio companie aproape de strategie acum. Apasă ➕ în Strategia mea ca să verifici mai multe.':'Se încarcă…'}</li>`;
+  $('#near-list').querySelectorAll('[data-fav]').forEach(b=>b.onclick=()=>toggleFav(b.dataset.fav));}
+
 /* TAB — Home (favorites) */
 const homeS={sort:{i:2,dir:-1}};
 function renderHome(){const tb=$('#t-home');const rows=FAV.map(byT).filter(Boolean).map(score);
@@ -482,6 +538,45 @@ function renderHome(){const tb=$('#t-home');const rows=FAV.map(byT).filter(Boole
   const fn=NEWS.filter(n=>n.tickers?.some(t=>FAV.includes(t))).slice(0,8);
   $('#h-news').innerHTML=!FAV.length?'<p class="intro">Aici apar știrile despre companiile tale favorite.</p>':fn.length?fn.map(newsHTML).join(''):`<p class="intro">${NEWS_LOADED?'Nicio știre recentă despre favoritele tale.':'Se încarcă știrile…'}</p>`;}
 
+
+/* Accounts & cloud favorites (Supabase) */
+const SUPA_URL='https://kyraflykppslxfeksaas.supabase.co',SUPA_KEY='sb_publishable_NWZHRctzMnRsLZ1aGHnY8w_4GTjjyXR';
+let sb=null,USER=null;
+const setMsg=(t,cls='')=>{const m=$('#authMsg');m.textContent=t;m.className='msg '+cls};
+let authMode='in';
+function authUI(){const a=$('#acct');a.hidden=!sb;
+  $('#who').textContent=USER?USER.email:'';$('#loginBtn').textContent=USER?'Ieși din cont':'Intră în cont';$('#loginBtn').className=USER?'btn ghost':'btn';
+  $('#favNote').textContent=USER?'Favoritele sunt salvate în contul tău și apar pe toate dispozitivele.':'Apasă pe ☆ de lângă orice companie, din orice pagină, ca s-o adaugi aici. Intră în cont ca să le vezi pe toate dispozitivele.';}
+function openAuth(mode){authMode=mode;$('#authTitle').textContent=mode==='in'?'Intră în cont':'Creează cont';$('#authGo').textContent=mode==='in'?'Intră':'Creează cont';
+  $('#authSwitch').textContent=mode==='in'?'Nu ai cont? Creează unul':'Ai deja cont? Intră';$('#authPass').autocomplete=mode==='in'?'current-password':'new-password';
+  setMsg('');$('#modal').hidden=false;setTimeout(()=>$('#authEmail').focus(),50);}
+const closeAuth=()=>{$('#modal').hidden=true};
+async function cloudFav(t,on){if(!sb||!USER)return;try{
+  if(on)await sb.from('favorites').upsert({user_id:USER.id,symbol:t});else await sb.from('favorites').delete().eq('user_id',USER.id).eq('symbol',t);}catch(e){}}
+async function syncFav(){if(!sb||!USER)return;try{
+  const {data,error}=await sb.from('favorites').select('symbol,created_at').order('created_at',{ascending:false});if(error)throw error;
+  const cloud=(data||[]).map(r=>r.symbol);const local=FAV.filter(t=>!cloud.includes(t));
+  if(local.length)await sb.from('favorites').upsert(local.map(symbol=>({user_id:USER.id,symbol})));
+  FAV=[...local,...cloud];LS.set('radar-fav',FAV);
+  const metaT=new Set(META.map(m=>m[0]));await pmap(FAV.filter(t=>!metaT.has(t)&&!SD[t]),5,loadCompany);renderAll();}catch(e){}}
+async function initAuth(){if(!window.supabase)return;
+  sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
+  const {data}=await sb.auth.getSession();USER=data?.session?.user||null;authUI();if(USER)syncFav();
+  sb.auth.onAuthStateChange((ev,session)=>{const was=USER?.id;USER=session?.user||null;authUI();if(USER&&USER.id!==was)syncFav();});
+  $('#loginBtn').onclick=async()=>{if(USER){await sb.auth.signOut();USER=null;authUI();}else openAuth('in');};
+  $('#authCancel').onclick=closeAuth;$('#modal').onclick=e=>{if(e.target.id==='modal')closeAuth()};
+  $('#authSwitch').onclick=()=>openAuth(authMode==='in'?'up':'in');
+  $('#authForgot').onclick=async()=>{const email=$('#authEmail').value.trim();if(!email){setMsg('Scrie emailul mai sus, apoi apasă din nou.','err');return}
+    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin});setMsg(error?'Nu am putut trimite emailul: '+error.message:'Ți-am trimis un email ca să-ți resetezi parola.',error?'err':'ok');};
+  $('#authForm').onsubmit=async e=>{e.preventDefault();const email=$('#authEmail').value.trim(),password=$('#authPass').value;
+    if(!email||password.length<6){setMsg('Scrie un email valid și o parolă de minim 6 caractere.','err');return}
+    $('#authGo').disabled=true;setMsg(authMode==='in'?'Se verifică…':'Se creează contul…');
+    const r=authMode==='in'?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin}});
+    $('#authGo').disabled=false;
+    if(r.error){const m=r.error.message||'';setMsg(/invalid login/i.test(m)?'Email sau parolă greșită.':/confirm/i.test(m)?'Confirmă întâi emailul (verifică inbox-ul).':/already/i.test(m)?'Există deja un cont cu emailul ăsta. Intră în cont.':'Eroare: '+m,'err');return}
+    if(authMode==='up'&&!r.data.session){setMsg('Cont creat! Ți-am trimis un email: apasă pe link ca să-l confirmi, apoi intră în cont.','ok');return}
+    closeAuth();};}
+
 /* Data loading */
 let Q=null,S=null,lastQ=0;
 function merge(){
@@ -492,7 +587,7 @@ function merge(){
       first:b.first??a.first??null,cash,debt,ys:b.ys||null,g5:b.g5??null});});
   renderAll();
 }
-function renderTables(){renderTop();renderPE();renderStrat();renderSearch();renderHome();}
+function renderTables(){renderTop();renderPE();renderStrat();renderSearch();renderHome();renderNear();renderIdx();}
 function renderAll(){renderTables();stamp();}
 function stamp(){const el=$('#stamp');if(!Q){el.textContent='SUA + Europa · se încarcă datele live de pe Yahoo Finance…';return}
   const mins=Math.round((Date.now()-lastQ)/60000);const d=new Date(Q.updated);
@@ -514,7 +609,7 @@ $('#brand').onclick=()=>go('home');
 const start=(location.hash||'').slice(1);
 show(IDS.includes(start)?start:'home');
 renderAll();renderNews();
-loadQuotes();loadSlow();loadNews();loadSaved();
+loadQuotes();loadSlow();loadNews();loadSaved();initAuth();
 setInterval(()=>{if(!document.hidden)loadQuotes()},60e3);
 setInterval(()=>{if(!document.hidden)loadNews()},15*60e3);
 setInterval(stamp,30e3);
