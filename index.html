@@ -154,23 +154,7 @@ td.morecell{padding:0}
     <input id="q" type="search" placeholder="Caută o companie, ETF sau indice (ex: Nike, VOO, S&P 500)…" autocomplete="off" aria-label="Caută o companie">
     <div class="sugg" id="sugg" hidden></div>
   </div>
-  <div class="acct" id="acct" hidden>
-    <span class="who" id="who"></span>
-    <button class="btn" id="loginBtn" type="button">Intră în cont</button>
-  </div>
 </header>
-<div class="modal" id="modal" hidden>
-  <form id="authForm" novalidate>
-    <h3 id="authTitle">Intră în cont</h3>
-    <p class="legend" style="margin:0">Cu un cont, favoritele tale apar pe toate dispozitivele: telefon, tabletă, laptop.</p>
-    <label for="authEmail">Email<input id="authEmail" type="email" autocomplete="email" required></label>
-    <label for="authPass">Parolă<input id="authPass" type="password" autocomplete="current-password" minlength="6" required></label>
-    <div class="msg" id="authMsg"></div>
-    <div class="row"><button class="btn" id="authGo" type="submit">Intră</button><button class="btn ghost" id="authCancel" type="button">Renunță</button></div>
-    <button class="linkbtn" id="authSwitch" type="button">Nu ai cont? Creează unul</button>
-    <button class="linkbtn" id="authForgot" type="button">Am uitat parola</button>
-  </form>
-</div>
 
 <nav role="tablist">
   <button role="tab" data-tab="home" aria-selected="true">Acasă</button>
@@ -193,7 +177,7 @@ td.morecell{padding:0}
       <div class="h2">Favoritele mele</div>
       <div class="summary" id="h-sum"></div>
       <div class="tbl"><table id="t-home"></table></div>
-      <p class="legend" id="favNote">Apasă pe ☆ de lângă orice companie, din orice pagină, ca s-o adaugi aici. Intră în cont ca să le vezi pe toate dispozitivele.</p>
+      <p class="legend" id="favNote">Apasă pe ☆ de lângă orice companie, din orice pagină, ca s-o adaugi aici. Favoritele sunt salvate pe dispozitivul ăsta.</p>
     </div>
     <div>
       <div class="h2">Știri despre favoritele tale</div>
@@ -255,7 +239,6 @@ td.morecell{padding:0}
 <p class="foot">Date live de pe Yahoo Finance: prețurile se reîmprospătează automat la fiecare minut, cash/datorii și istoricul la câteva ore, știrile la 15 minute. Companiile europene apar prin acțiunile lor listate în SUA (ADR), în dolari. Nu e sfat de investiții: e un instrument de filtrare, verifică întotdeauna înainte să cumperi.</p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const META=[
 ["AAPL","Apple","US","tech"],
@@ -355,7 +338,7 @@ function ratios(c){c.ratio=c.cash==null||c.debt==null?null:(c.cash===0?(c.debt==
 /* Favorites */
 let FAV=LS.get('radar-fav',[]);
 const isFav=t=>FAV.includes(t);
-function toggleFav(t){const on=!isFav(t);FAV=on?[t,...FAV]:FAV.filter(x=>x!==t);LS.set('radar-fav',FAV);cloudFav(t,on);if(!byT(t))loadCompany(t);renderAll();}
+function toggleFav(t){const on=!isFav(t);FAV=on?[t,...FAV]:FAV.filter(x=>x!==t);LS.set('radar-fav',FAV);if(!byT(t))loadCompany(t);renderAll();}
 const starCell=c=>`<button class="star ${isFav(c.t)?'on':''}" data-fav="${esc(c.t)}" aria-label="${isFav(c.t)?'Scoate de la':'Adaugă la'} favorite">${isFav(c.t)?'★':'☆'}</button>`;
 const coCell=c=>`<div class="co"><a href="${yahoo(c.t)}" target="_blank" rel="noopener">${esc(c.n)}</a><small><span class="tk">${esc(c.t)}</span> · ${esc(c.secName||SEC[c.sec]||'')}</small></div>`;
 const priceCell=c=>c.price==null?"–":`${c.price.toFixed(2)}${c.cur&&c.cur!=="USD"?' '+esc(c.cur):''}<br><small>${fmtPct(c.dchg)}</small>`;
@@ -539,44 +522,6 @@ function renderHome(){const tb=$('#t-home');const rows=FAV.map(byT).filter(Boole
   $('#h-news').innerHTML=!FAV.length?'<p class="intro">Aici apar știrile despre companiile tale favorite.</p>':fn.length?fn.map(newsHTML).join(''):`<p class="intro">${NEWS_LOADED?'Nicio știre recentă despre favoritele tale.':'Se încarcă știrile…'}</p>`;}
 
 
-/* Accounts & cloud favorites (Supabase) */
-const SUPA_URL='https://kyraflykppslxfeksaas.supabase.co',SUPA_KEY='sb_publishable_NWZHRctzMnRsLZ1aGHnY8w_4GTjjyXR';
-let sb=null,USER=null;
-const setMsg=(t,cls='')=>{const m=$('#authMsg');m.textContent=t;m.className='msg '+cls};
-let authMode='in';
-function authUI(){const a=$('#acct');a.hidden=!sb;
-  $('#who').textContent=USER?USER.email:'';$('#loginBtn').textContent=USER?'Ieși din cont':'Intră în cont';$('#loginBtn').className=USER?'btn ghost':'btn';
-  $('#favNote').textContent=USER?'Favoritele sunt salvate în contul tău și apar pe toate dispozitivele.':'Apasă pe ☆ de lângă orice companie, din orice pagină, ca s-o adaugi aici. Intră în cont ca să le vezi pe toate dispozitivele.';}
-function openAuth(mode){authMode=mode;$('#authTitle').textContent=mode==='in'?'Intră în cont':'Creează cont';$('#authGo').textContent=mode==='in'?'Intră':'Creează cont';
-  $('#authSwitch').textContent=mode==='in'?'Nu ai cont? Creează unul':'Ai deja cont? Intră';$('#authPass').autocomplete=mode==='in'?'current-password':'new-password';
-  setMsg('');$('#modal').hidden=false;setTimeout(()=>$('#authEmail').focus(),50);}
-const closeAuth=()=>{$('#modal').hidden=true};
-async function cloudFav(t,on){if(!sb||!USER)return;try{
-  if(on)await sb.from('favorites').upsert({user_id:USER.id,symbol:t});else await sb.from('favorites').delete().eq('user_id',USER.id).eq('symbol',t);}catch(e){}}
-async function syncFav(){if(!sb||!USER)return;try{
-  const {data,error}=await sb.from('favorites').select('symbol,created_at').order('created_at',{ascending:false});if(error)throw error;
-  const cloud=(data||[]).map(r=>r.symbol);const local=FAV.filter(t=>!cloud.includes(t));
-  if(local.length)await sb.from('favorites').upsert(local.map(symbol=>({user_id:USER.id,symbol})));
-  FAV=[...local,...cloud];LS.set('radar-fav',FAV);
-  const metaT=new Set(META.map(m=>m[0]));await pmap(FAV.filter(t=>!metaT.has(t)&&!SD[t]),5,loadCompany);renderAll();}catch(e){}}
-async function initAuth(){if(!window.supabase)return;
-  sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
-  const {data}=await sb.auth.getSession();USER=data?.session?.user||null;authUI();if(USER)syncFav();
-  sb.auth.onAuthStateChange((ev,session)=>{const was=USER?.id;USER=session?.user||null;setTimeout(()=>{authUI();if(USER){closeAuth();$('#authGo').disabled=false;}if(USER&&USER.id!==was)syncFav();},0);});
-  $('#loginBtn').onclick=async()=>{if(USER){await sb.auth.signOut();USER=null;authUI();}else openAuth('in');};
-  $('#authCancel').onclick=closeAuth;$('#modal').onclick=e=>{if(e.target.id==='modal')closeAuth()};
-  $('#authSwitch').onclick=()=>openAuth(authMode==='in'?'up':'in');
-  $('#authForgot').onclick=async()=>{const email=$('#authEmail').value.trim();if(!email){setMsg('Scrie emailul mai sus, apoi apasă din nou.','err');return}
-    const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin});setMsg(error?'Nu am putut trimite emailul: '+error.message:'Ți-am trimis un email ca să-ți resetezi parola.',error?'err':'ok');};
-  $('#authForm').onsubmit=async e=>{e.preventDefault();const email=$('#authEmail').value.trim(),password=$('#authPass').value;
-    if(!email||password.length<6){setMsg('Scrie un email valid și o parolă de minim 6 caractere.','err');return}
-    $('#authGo').disabled=true;setMsg(authMode==='in'?'Se verifică…':'Se creează contul…');
-    const r=authMode==='in'?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password,options:{emailRedirectTo:location.origin}});
-    $('#authGo').disabled=false;
-    if(r.error){const m=r.error.message||'';setMsg(/invalid login/i.test(m)?'Email sau parolă greșită.':/confirm/i.test(m)?'Confirmă întâi emailul (verifică inbox-ul).':/already/i.test(m)?'Există deja un cont cu emailul ăsta. Intră în cont.':'Eroare: '+m,'err');return}
-    if(authMode==='up'&&!r.data.session){setMsg('Cont creat! Ți-am trimis un email: apasă pe link ca să-l confirmi, apoi intră în cont.','ok');return}
-    closeAuth();};}
-
 /* Data loading */
 let Q=null,S=null,lastQ=0;
 function merge(){
@@ -609,7 +554,7 @@ $('#brand').onclick=()=>go('home');
 const start=(location.hash||'').slice(1);
 show(IDS.includes(start)?start:'home');
 renderAll();renderNews();
-loadQuotes();loadSlow();loadNews();loadSaved();initAuth();
+loadQuotes();loadSlow();loadNews();loadSaved();
 setInterval(()=>{if(!document.hidden)loadQuotes()},60e3);
 setInterval(()=>{if(!document.hidden)loadNews()},15*60e3);
 setInterval(stamp,30e3);
