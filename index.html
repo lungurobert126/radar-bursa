@@ -562,7 +562,7 @@ async function syncFav(){if(!sb||!USER)return;try{
 async function initAuth(){if(!window.supabase)return;
   sb=window.supabase.createClient(SUPA_URL,SUPA_KEY);
   const {data}=await sb.auth.getSession();USER=data?.session?.user||null;authUI();if(USER)syncFav();
-  sb.auth.onAuthStateChange((ev,session)=>{const was=USER?.id;USER=session?.user||null;authUI();if(USER&&USER.id!==was)syncFav();});
+  sb.auth.onAuthStateChange((ev,session)=>{const was=USER?.id;USER=session?.user||null;setTimeout(()=>{authUI();if(USER){closeAuth();$('#authGo').disabled=false;}if(USER&&USER.id!==was)syncFav();},0);});
   $('#loginBtn').onclick=async()=>{if(USER){await sb.auth.signOut();USER=null;authUI();}else openAuth('in');};
   $('#authCancel').onclick=closeAuth;$('#modal').onclick=e=>{if(e.target.id==='modal')closeAuth()};
   $('#authSwitch').onclick=()=>openAuth(authMode==='in'?'up':'in');
